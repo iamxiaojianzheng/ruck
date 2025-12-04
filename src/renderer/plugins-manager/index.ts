@@ -217,6 +217,14 @@ const createPluginManager = (): any => {
     setSearchValue('');
     setOptionsRef([]);
     window.setSubInput({ placeholder: '' });
+
+    // 主动聚焦主输入框，确保退出插件后用户可以直接输入
+    setTimeout(() => {
+      const mainInput = document.getElementById('search');
+      if (mainInput) {
+        (mainInput as HTMLInputElement).focus();
+      }
+    }, 0);
   };
 
   window.pluginLoaded = () => {

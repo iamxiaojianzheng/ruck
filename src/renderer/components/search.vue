@@ -29,6 +29,7 @@
       @keydown="(e) => checkNeedInit(e)"
       @keypress.enter="(e) => keydownEvent(e, 'enter')"
       @focus="emit('focus')"
+      @blur="handleBlur"
     >
       <template #suffix>
         <div class="suffix-tool">
@@ -254,6 +255,18 @@ const newWindow = () => {
 };
 
 const mainInput = ref(null);
+
+// 处理输入框失焦事件，自动重新聚焦
+const handleBlur = () => {
+  // 如果当前没有运行插件，则自动重新聚焦到输入框
+  // 这样可以确保用户在任何时候都可以直接输入，无需手动点击输入框
+  if (!props.currentPlugin.name) {
+    setTimeout(() => {
+      (mainInput.value as unknown as HTMLInputElement)?.focus();
+    }, 100);
+  }
+};
+
 window.rubick.hooks.onShow = () => {
   console.log('onShow');
   (mainInput.value as unknown as HTMLDivElement).focus();

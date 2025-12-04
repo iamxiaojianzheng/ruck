@@ -162,6 +162,8 @@ export default (): RunnerBrowser => {
           window.setBrowserView(null);
           if (view === snapshotView) {
             window.webContents?.executeJavaScript(`window.initRubick()`);
+            // 主进程层面恢复焦点到主窗口
+            window.webContents.focus();
             view = undefined;
           }
         }
