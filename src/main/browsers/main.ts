@@ -25,8 +25,10 @@ export default () => {
       height: WINDOW_HEIGHT,
       minHeight: WINDOW_MIN_HEIGHT,
       useContentSize: true,
-      resizable: true,
+      resizable: true, // 允许调整，但通过 will-resize 事件阻止用户手动拖拽
       width: WINDOW_WIDTH,
+      minWidth: WINDOW_WIDTH,
+      maxWidth: WINDOW_WIDTH, // 锁定宽度
       frame: false,
       title: APP_NAME,
       show: false,
@@ -61,6 +63,25 @@ export default () => {
     win.on('closed', () => {
       win = undefined;
     });
+
+    // 阻止用户手动拖拽调整窗口大小，但允许代码调整
+    let allowResize = false;
+    win.on('will-resize', (event, newBounds) => {
+      if (!allowResize) {
+        // 阻止手动拖拽调整
+        event.preventDefault();
+      }
+    });
+
+    // 暴露方法供代码调用时允许调整
+    (win as any).setExpendHeightAllowed = (height: number) => {
+      allowResize = true;
+      win.setSize(win.getSize()[0], height);
+      // 使用 nextTick 确保 setSize 完成后再禁止
+      process.nextTick(() => {
+        allowResize = false;
+      });
+    };
 
     win.on('show', () => {
       isBlur = false;

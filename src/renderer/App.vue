@@ -108,7 +108,7 @@ watch(
   },
   {
     immediate: true,
-    deep: false, // 优化性能，不需要深度监听
+    deep: true, // 启用深度监听以检测 pluginHistory 数组的变化
   }
 );
 

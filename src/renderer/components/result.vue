@@ -202,6 +202,9 @@ initMainCmdMenus();
     width: 100%;
     border-top: 1px dashed var(--color-border-light);
     box-sizing: border-box;
+    max-height: calc(70px * 3); /* 最多显示3排 */
+    overflow-y: auto; /* 超过3排时可滚动 */
+    overflow-x: hidden;
     .history-item {
       cursor: pointer;
       box-sizing: border-box;
@@ -212,12 +215,12 @@ initMainCmdMenus();
       flex-direction: column;
       color: var(--color-text-content);
       border-right: 1px dashed var(--color-border-light);
+      border-bottom: 1px dashed var(--color-border-light); /* 添加下边框以区分行 */
       position: relative;
       .badge {
         position: absolute;
         top: 2px;
         right: 2px;
-        width: 0;
         height: 0;
         border-radius: 4px;
         border-top: 6px solid var(--ant-primary-4);

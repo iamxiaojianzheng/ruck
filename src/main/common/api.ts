@@ -187,7 +187,16 @@ class API extends DBInstance {
     const originWindow = this.getCurrentWindow(window, e);
     if (!originWindow) return;
     const targetHeight = height;
-    originWindow.setSize(originWindow.getSize()[0], targetHeight);
+    const currentSize = originWindow.getSize();
+
+    // 使用允许调整的方法
+    if ((originWindow as any).setExpendHeightAllowed) {
+      (originWindow as any).setExpendHeightAllowed(targetHeight);
+    } else {
+      // 回退方案
+      originWindow.setSize(currentSize[0], targetHeight);
+    }
+
     const screenPoint = screen.getCursorScreenPoint();
     const display = screen.getDisplayNearestPoint(screenPoint);
     const position = originWindow.getPosition()[1] + targetHeight > display.bounds.height ? height - 60 : 0;
