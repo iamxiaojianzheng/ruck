@@ -1,9 +1,9 @@
 import { BrowserWindow, ipcMain, nativeTheme, screen } from 'electron';
 import path from 'path';
 import commonConst from '../../common/utils/commonConst';
-import { GUIDE_WIDTH, WINDOW_MIN_HEIGHT, GUIDE_HEIGHT } from '@/common/constans/common';
+import { GUIDE_CONFIG, WINDOW_CONFIG } from '@/common/constants';
 
-const getWindowPos = (width, height) => {
+const getWindowPos = (width: number, height: number) => {
   const screenPoint = screen.getCursorScreenPoint();
   const displayPoint = screen.getDisplayNearestPoint(screenPoint);
   return [
@@ -12,7 +12,7 @@ const getWindowPos = (width, height) => {
   ];
 };
 
-let win: any;
+let win: BrowserWindow | null = null;
 
 export default () => {
   const init = () => {
@@ -25,7 +25,7 @@ export default () => {
   };
 
   const createWindow = async () => {
-    const [x, y] = getWindowPos(800, 600);
+    const [x, y] = getWindowPos(GUIDE_CONFIG.WIDTH, GUIDE_CONFIG.HEIGHT);
     win = new BrowserWindow({
       show: false,
       alwaysOnTop: true,
@@ -40,9 +40,9 @@ export default () => {
       enableLargerThanScreen: true,
       x,
       y,
-      width: GUIDE_WIDTH,
-      height: GUIDE_HEIGHT,
-      minHeight: WINDOW_MIN_HEIGHT,
+      width: GUIDE_CONFIG.WIDTH,
+      height: GUIDE_CONFIG.HEIGHT,
+      minHeight: WINDOW_CONFIG.MIN_HEIGHT,
       webPreferences: {
         webSecurity: false,
         backgroundThrottling: false,
@@ -60,12 +60,12 @@ export default () => {
       win.loadURL(`file://${path.join(__static, './guide/index.html')}`);
     }
     win.on('closed', () => {
-      win = undefined;
+      win = null;
     });
 
     win.once('ready-to-show', () => {
       // win.webContents.openDevTools();
-      win.show();
+      win?.show();
     });
   };
   const getWindow = () => win;

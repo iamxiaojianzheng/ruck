@@ -5,6 +5,7 @@ import commonConst from '../../common/utils/commonConst';
 import { PLUGIN_INSTALL_DIR as baseDir } from '@/common/constans/main';
 import localConfig from '@/main/common/initLocalConfig';
 import { WINDOW_HEIGHT, WINDOW_PLUGIN_HEIGHT, WINDOW_WIDTH } from '@/common/constans/common';
+import { WINDOW_CONFIG } from '@/common/constants'; // Added import for WINDOW_CONFIG
 
 const getRelativePath = (indexPath) => {
   return commonConst.windows() ? indexPath.replace('file://', '') : indexPath.replace('file:', '');

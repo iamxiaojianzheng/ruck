@@ -6,29 +6,33 @@ import { uIOhook } from 'uiohook-napi';
 
 import localConfig from '@/main/common/initLocalConfig';
 import commonConst from '../../common/utils/commonConst';
-import { APP_NAME, WINDOW_HEIGHT, WINDOW_MIN_HEIGHT, WINDOW_WIDTH } from '@/common/constans/common';
+import { APP_NAME, WINDOW_CONFIG } from '@/common/constants';
+import type { MainWindowInstance } from '@/types';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('@electron/remote/main').initialize();
 
 export default () => {
-  let win: any;
+  let win: MainWindowInstance;
   let isBlur = false;
 
   const init = () => {
     createWindow();
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    require('@electron/remote/main').enable(win.webContents);
+    if (win) {
+      require('@electron/remote/main').enable(win.webContents);
+    }
   };
 
   const createWindow = async () => {
     win = new BrowserWindow({
-      height: WINDOW_HEIGHT,
-      minHeight: WINDOW_MIN_HEIGHT,
+      height: WINDOW_CONFIG.HEIGHT,
+      minHeight: WINDOW_CONFIG.MIN_HEIGHT,
+      maxHeight: WINDOW_CONFIG.MAX_HEIGHT,
       useContentSize: true,
       resizable: true, // 允许调整，但通过 will-resize 事件阻止用户手动拖拽
-      width: WINDOW_WIDTH,
-      minWidth: WINDOW_WIDTH,
-      maxWidth: WINDOW_WIDTH, // 锁定宽度
+      width: WINDOW_CONFIG.WIDTH,
+      minWidth: WINDOW_CONFIG.WIDTH,
+      maxWidth: WINDOW_CONFIG.WIDTH, // 锁定宽度
       frame: false,
       title: APP_NAME,
       show: false,
