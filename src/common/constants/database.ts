@@ -7,7 +7,7 @@ export const DB_KEYS = {
     /** 本地配置键 */
     LOCAL_CONFIG: 'localConfig',
     /** 插件历史记录键 */
-    PLUGIN_HISTORY: 'ruck_plugin_using_history',
+    PLUGIN_HISTORY: 'rubick-plugin-history',
     /** 超级面板用户插件键 */
     SUPER_PANEL: 'super-panel-user-plugins',
     /** 本地插件键 */

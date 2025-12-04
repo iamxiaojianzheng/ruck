@@ -3,7 +3,7 @@ import localConfig from '../common/initLocalConfig';
 import commonConst from '@/common/utils/commonConst';
 import path from 'path';
 import fs from 'fs';
-import { WINDOW_MIN_HEIGHT } from '@/common/constans/common';
+import { WINDOW_CONFIG } from '@/common/constants';
 import { PLUGIN_INSTALL_ROOT_DIR } from '@/common/constans/main';
 
 export default () => {
@@ -39,7 +39,7 @@ export default () => {
   const createWindow = async (pluginInfo, bounds: Electron.Rectangle) => {
     win = new BrowserWindow({
       ...bounds,
-      minHeight: WINDOW_MIN_HEIGHT,
+      minHeight: WINDOW_CONFIG.MIN_HEIGHT,
       autoHideMenuBar: true,
       titleBarStyle: 'hidden',
       trafficLightPosition: { x: 12, y: 21 },

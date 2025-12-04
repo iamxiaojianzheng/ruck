@@ -4,8 +4,7 @@ import fs from 'fs';
 import commonConst from '../../common/utils/commonConst';
 import { PLUGIN_INSTALL_DIR as baseDir } from '@/common/constans/main';
 import localConfig from '@/main/common/initLocalConfig';
-import { WINDOW_HEIGHT, WINDOW_PLUGIN_HEIGHT, WINDOW_WIDTH } from '@/common/constans/common';
-import { WINDOW_CONFIG } from '@/common/constants'; // Added import for WINDOW_CONFIG
+import { WINDOW_CONFIG } from '@/common/constants';
 
 const getRelativePath = (indexPath) => {
   return commonConst.windows() ? indexPath.replace('file://', '') : indexPath.replace('file:', '');
@@ -34,13 +33,13 @@ export default (): RunnerBrowser => {
   const viewReadyFn = async (window, { pluginSetting, ext }) => {
     if (!view) return;
     const height = pluginSetting && pluginSetting.height;
-    window.setSize(WINDOW_WIDTH, height || WINDOW_PLUGIN_HEIGHT);
+    window.setSize(WINDOW_CONFIG.WIDTH, height || WINDOW_CONFIG.PLUGIN_HEIGHT);
 
     view.setBounds({
       x: 0,
-      y: WINDOW_HEIGHT,
-      width: WINDOW_WIDTH,
-      height: height || WINDOW_PLUGIN_HEIGHT - WINDOW_HEIGHT,
+      y: WINDOW_CONFIG.HEIGHT,
+      width: WINDOW_CONFIG.WIDTH,
+      height: height || WINDOW_CONFIG.PLUGIN_HEIGHT - WINDOW_CONFIG.HEIGHT,
     });
 
     // window.on('resize', () => {
