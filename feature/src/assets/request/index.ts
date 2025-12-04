@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { message } from 'ant-design-vue';
 
-let baseURL = 'https://ruck.jiahe.host/';
+let baseURL = 'https://ruck.host/';
 let access_token = '';
 
 try {
@@ -14,7 +14,7 @@ try {
 
 const instance = axios.create({
   timeout: 4000,
-  baseURL: baseURL || 'https://ruck.jiahe.host/',
+  baseURL: baseURL || 'https://ruck.host/',
 });
 
 export default {
