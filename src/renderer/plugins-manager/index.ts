@@ -42,6 +42,28 @@ const createPluginManager = (): any => {
     }
   };
 
+  const cleanupDeletedPluginsFromHistory = () => {
+    const localPlugins = getGlobal('LOCAL_PLUGINS')?.getLocalPlugins() || [];
+    const result = window.rubick.db.get(PLUGIN_HISTORY) || {};
+
+    if (result && result.data) {
+      const validHistory = result.data.filter((item: any) =>
+        localPlugins.some((p: any) =>
+          p.name === item.name || p.name === item.originName
+        )
+      );
+
+      if (validHistory.length !== result.data.length) {
+        window.rubick.db.put({
+          _id: PLUGIN_HISTORY,
+          _rev: result._rev,
+          data: validHistory,
+        });
+        state.pluginHistory = validHistory;
+      }
+    }
+  };
+
   const initLocalStartPlugin = () => {
     const result = ipcRenderer.sendSync('msg-trigger', {
       type: 'dbGet',
@@ -217,6 +239,11 @@ const createPluginManager = (): any => {
     setSearchValue('');
     setOptionsRef([]);
     window.setSubInput({ placeholder: '' });
+
+    // 清理已删除插件的历史记录
+    cleanupDeletedPluginsFromHistory();
+    // 重新加载历史记录
+    initPluginHistory();
 
     // 主动聚焦主输入框，确保退出插件后用户可以直接输入
     setTimeout(() => {

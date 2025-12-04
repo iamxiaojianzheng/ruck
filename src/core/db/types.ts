@@ -13,6 +13,7 @@ export interface DocRes {
   ok: boolean;
   rev: RevisionId;
   _id: string;
+  _rev: string;
   data?: any;
 }
 
