@@ -1,5 +1,5 @@
 <template>
-  <div id="components-layout" @mousedown="onMouseDown">
+  <div id="components-layout" :class="{ drag: isDrag }" @mousedown="onMouseDown">
     <Search
       :currentPlugin="currentPlugin"
       :searchValue="searchValue"
@@ -32,21 +32,24 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref, toRaw } from 'vue';
+import { watch, ref, toRaw, onMounted } from 'vue';
 import { exec } from 'child_process';
+import { message } from 'ant-design-vue';
+import { getGlobal } from '@electron/remote';
+
 import Result from './components/result.vue';
 import Search from './components/search.vue';
 import getWindowHeight from '../common/utils/getWindowHeight';
 import createPluginManager from './plugins-manager';
 import useDrag from '../common/utils/dragWindow';
-import { getGlobal } from '@electron/remote';
-import { PLUGIN_HISTORY } from '@/renderer/constants/renderer';
-import { message } from 'ant-design-vue';
 import localConfig from './confOp';
+import { PLUGIN_HISTORY } from '@/renderer/constants/renderer';
 
-const { onMouseDown } = useDrag();
+// 拖拽逻辑
+const { onMouseDown, isDrag } = useDrag();
 const remote = window.require('@electron/remote');
 
+// 插件管理器逻辑
 const {
   initPlugins,
   getPluginInfo,
@@ -69,52 +72,62 @@ const {
   changePluginHistory,
 } = createPluginManager();
 
+// 初始化插件
 initPlugins();
 
 const currentSelect = ref(0);
-const menuPluginInfo: any = ref({});
+const menuPluginInfo = ref<any>({});
+const config = ref<any>(localConfig.getConfig());
 
-const config: any = ref(localConfig.getConfig());
-
-getPluginInfo({
-  pluginName: 'feature',
-  // eslint-disable-next-line no-undef
-  pluginPath: `${__static}/feature/package.json`,
-}).then((res) => {
-  menuPluginInfo.value = res;
-  remote.getGlobal('LOCAL_PLUGINS').addPlugin(res);
+// 获取插件市场信息
+onMounted(() => {
+  getPluginInfo({
+    pluginName: 'feature',
+    // eslint-disable-next-line no-undef
+    pluginPath: `${__static}/feature/package.json`,
+  }).then((res) => {
+    menuPluginInfo.value = res;
+    // 注册到全局插件列表
+    remote.getGlobal('LOCAL_PLUGINS').addPlugin(res);
+  });
 });
 
+// 监听状态变化，调整窗口高度
 watch(
   [options, pluginHistory, currentPlugin],
   () => {
     currentSelect.value = 0;
+    // 如果当前有运行中的插件，则不调整高度
     if (currentPlugin.value.name) return;
-    window.rubick.setExpendHeight(
-      getWindowHeight(
-        options.value,
-        pluginLoading.value || !config.value.perf.common.history ? [] : pluginHistory.value
-      )
+
+    const height = getWindowHeight(
+      options.value,
+      pluginLoading.value || !config.value.perf.common.history ? [] : pluginHistory.value
     );
+    window.rubick.setExpendHeight(height);
   },
   {
     immediate: true,
+    deep: false, // 优化性能，不需要深度监听
   }
 );
 
-const changeIndex = (index) => {
+// 切换选中项
+const changeIndex = (index: number) => {
   const len = options.value.length || pluginHistory.value.length;
   if (!len) return;
-  if (currentSelect.value + index > len - 1) {
-    currentSelect.value = 0;
-  } else if (currentSelect.value + index < 0) {
-    currentSelect.value = len - 1;
-  } else {
-    currentSelect.value = currentSelect.value + index;
+
+  let nextIndex = currentSelect.value + index;
+  if (nextIndex > len - 1) {
+    nextIndex = 0;
+  } else if (nextIndex < 0) {
+    nextIndex = len - 1;
   }
+  currentSelect.value = nextIndex;
 };
 
-const openMenu = (ext) => {
+// 打开插件市场菜单
+const openMenu = (ext: any) => {
   openPlugin({
     ...toRaw(menuPluginInfo.value),
     feature: menuPluginInfo.value.features[0],
@@ -124,9 +137,12 @@ const openMenu = (ext) => {
   });
 };
 
+// 暴露给全局对象，供插件调用
 window.rubick.openMenu = openMenu;
 
-const choosePlugin = (plugin) => {
+// 选择并执行插件/应用
+const choosePlugin = (plugin: any) => {
+  // 如果是搜索结果中的项
   if (options.value.length) {
     const currentChoose = options.value[currentSelect.value];
     currentChoose.click();
@@ -135,30 +151,29 @@ const choosePlugin = (plugin) => {
 
   const localPlugins = getGlobal('LOCAL_PLUGINS').getLocalPlugins();
   const currentChoose = plugin || pluginHistory.value[currentSelect.value];
-  let hasRemove = true;
 
+  // 处理应用类型
   if (currentChoose.pluginType === 'app') {
-    hasRemove = false;
     changePluginHistory(currentChoose);
-    exec(currentChoose.action);
+    try {
+      exec(currentChoose.action);
+    } catch (e) {
+      message.error('启动应用失败');
+    }
     return;
   }
 
-  localPlugins.find((plugin) => {
-    if (plugin.name === currentChoose.originName) {
-      hasRemove = false;
-      return true;
-    }
-    return false;
-  });
+  // 检查插件是否已被卸载
+  const isInstalled = localPlugins.some((p: any) => p.name === currentChoose.originName);
 
-  if (hasRemove) {
+  if (!isInstalled) {
     const result = window.rubick.db.get(PLUGIN_HISTORY) || {};
-    const history = result.data.filter((item) => item.originName !== currentChoose.originName);
+    const history = result.data.filter((item: any) => item.originName !== currentChoose.originName);
     setPluginHistory(history);
     return message.warning('插件已被卸载！');
   }
 
+  // 构造新的插件信息并打开
   const newPluginInfo = {
     ...currentChoose,
     ext: {
