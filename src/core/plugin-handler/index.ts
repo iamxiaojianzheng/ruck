@@ -10,6 +10,42 @@ import axios from 'axios';
 fixPath();
 
 /**
+ * 任务队列，用于串行执行异步任务
+ */
+class TaskQueue {
+  private queue: Array<() => Promise<void>> = [];
+  private running = false;
+
+  /**
+   * 添加任务到队列
+   * @param task 异步任务函数
+   */
+  add(task: () => Promise<void>) {
+    this.queue.push(task);
+    this.run();
+  }
+
+  /**
+   * 执行队列中的任务
+   */
+  private async run() {
+    if (this.running) return;
+    this.running = true;
+    while (this.queue.length > 0) {
+      const task = this.queue.shift();
+      if (task) {
+        try {
+          await task();
+        } catch (e) {
+          console.error('任务执行失败:', e);
+        }
+      }
+    }
+    this.running = false;
+  }
+}
+
+/**
  * 系统插件管理器
  * @class AdapterHandler
  */
@@ -21,6 +57,9 @@ class AdapterHandler {
 
   // 插件缓存，用于存储最新版本信息
   pluginCaches: Record<string, string> = {};
+
+  // 任务队列实例
+  private taskQueue = new TaskQueue();
 
   /**
    * 创建 AdapterHandler 实例
@@ -121,11 +160,27 @@ class AdapterHandler {
   }
 
   /**
-   * 安装并启动插件
+   * 安装并启动插件（公开方法，加入队列）
    * @param adapters 插件名称列表
    * @param options 选项
    */
   async install(adapters: Array<string>, options: { isDev: boolean }) {
+    return new Promise<void>((resolve, reject) => {
+      this.taskQueue.add(async () => {
+        try {
+          await this._install(adapters, options);
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+  }
+
+  /**
+   * 内部安装方法
+   */
+  private async _install(adapters: Array<string>, options: { isDev: boolean }) {
     const installCmd = options.isDev ? 'link' : 'install';
     await this.execCommand(installCmd, adapters);
   }
@@ -136,7 +191,9 @@ class AdapterHandler {
    * @memberof AdapterHandler
    */
   async update(...adapters: string[]) {
-    await this.execCommand('update', adapters);
+    this.taskQueue.add(async () => {
+      await this.execCommand('update', adapters);
+    });
   }
 
   /**
@@ -146,8 +203,10 @@ class AdapterHandler {
    * @memberof AdapterHandler
    */
   async uninstall(adapters: string[], options: { isDev: boolean }) {
-    const installCmd = options.isDev ? 'unlink' : 'uninstall';
-    await this.execCommand(installCmd, adapters);
+    this.taskQueue.add(async () => {
+      const installCmd = options.isDev ? 'unlink' : 'uninstall';
+      await this.execCommand(installCmd, adapters);
+    });
   }
 
   /**
@@ -175,9 +234,10 @@ class AdapterHandler {
    * 运行包管理器命令
    * @param cmd 命令 (install, uninstall, update, link, unlink)
    * @param modules 模块名称列表
+   * @param retryCount 重试次数
    * @memberof AdapterHandler
    */
-  private async execCommand(cmd: string, modules: string[]): Promise<{ code: number; data: string }> {
+  private async execCommand(cmd: string, modules: string[], retryCount = 3): Promise<{ code: number; data: string }> {
     return new Promise((resolve, reject) => {
       let args: string[] = [cmd];
 
@@ -208,11 +268,22 @@ class AdapterHandler {
         output += data;
       });
 
-      npm.on('close', (code: number) => {
+      npm.on('close', async (code: number) => {
         if (code === 0) {
           resolve({ code: 0, data: output });
         } else {
-          reject({ code: code, data: output });
+          // 失败重试逻辑
+          if (retryCount > 0) {
+            console.log(`命令执行失败，正在重试 (剩余次数: ${retryCount})...`);
+            try {
+              const result = await this.execCommand(cmd, modules, retryCount - 1);
+              resolve(result);
+            } catch (e) {
+              reject(e);
+            }
+          } else {
+            reject({ code: code, data: output });
+          }
         }
       });
 
