@@ -4,7 +4,7 @@ import commonConst from '@/common/utils/commonConst';
 import path from 'path';
 import fs from 'fs';
 import { WINDOW_CONFIG } from '@/common/constants';
-import { PLUGIN_INSTALL_ROOT_DIR } from '@/common/constans/main';
+import { PLUGIN_INSTALL_ROOT_DIR } from '@/common/constants/main';
 
 export default () => {
   const DETACH_CHANNEL = 'detach:service';

@@ -1,4 +1,4 @@
-import defaultConfig from '@/common/constans/defaultConfig';
+import defaultConfig from '@/common/constants/defaultConfig';
 import DBInstance from './db';
 const LOCAL_CONFIG_KEY = 'rubick-local-config';
 

@@ -1,4 +1,4 @@
-import { PLUGIN_INSTALL_ROOT_DIR } from '@/common/constans/main';
+import { PLUGIN_INSTALL_ROOT_DIR } from '@/common/constants/main';
 import commonConst from '@/common/utils/commonConst';
 import path from 'path';
 import fs from 'fs';

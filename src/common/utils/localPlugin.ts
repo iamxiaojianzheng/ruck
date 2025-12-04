@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import request from 'request';
 import { PluginHandler } from '@/core';
-import { PLUGIN_INSTALL_DIR as baseDir, PLUGIN_INSTALL_ROOT_DIR } from '@/common/constans/main';
+import { PLUGIN_INSTALL_DIR as baseDir, PLUGIN_INSTALL_ROOT_DIR } from '@/common/constants/main';
 import API from '@/main/common/api';
 
 const configPath = path.join(baseDir, './rubick-local-plugin.json');

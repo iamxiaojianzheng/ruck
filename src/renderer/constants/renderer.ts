@@ -1,6 +1,6 @@
 import { app } from '@electron/remote';
 import path from 'path';
-import { PLUGIN_INSTALL_DIR_NAME } from '@/common/constans/common';
+import { PLUGIN_INSTALL_DIR_NAME } from '@/common/constants';
 
 const appPath = app.getPath('userData');
 

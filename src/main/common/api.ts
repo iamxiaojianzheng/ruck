@@ -7,7 +7,7 @@ import { screenCapture } from '@/core';
 import commonConst from '@/common/utils/commonConst';
 import commonUtil from '@/common/utils/commonUtil';
 import getCopyFiles from '@/common/utils/getCopyFiles';
-import { DECODE_KEY, PLUGIN_INSTALL_DIR as baseDir } from '@/common/constans/main';
+import { DECODE_KEY, PLUGIN_INSTALL_DIR as baseDir } from '@/common/constants/main';
 
 import mainInstance from '../index';
 import { runner, detach } from '../browsers';

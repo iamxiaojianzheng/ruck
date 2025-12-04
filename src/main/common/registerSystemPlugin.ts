@@ -1,7 +1,7 @@
 /* eslint-disable */
 import path from 'path';
 import fs from 'fs';
-import { PLUGIN_INSTALL_DIR } from '@/common/constans/main';
+import { PLUGIN_INSTALL_DIR } from '@/common/constants/main';
 
 export default () => {
   // 读取所有插件

@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import getLocalDataFile from './getLocalDataFile';
-import defaultConfigForAnyPlatform from '../constans/defaultConfig';
+import defaultConfigForAnyPlatform from '../constants/defaultConfig';
 
 const configPath = path.join(getLocalDataFile(), './rubick-config.json');
 

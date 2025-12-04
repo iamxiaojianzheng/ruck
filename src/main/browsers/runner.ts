@@ -2,7 +2,7 @@ import { BrowserView, BrowserWindow, session } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import commonConst from '../../common/utils/commonConst';
-import { PLUGIN_INSTALL_DIR as baseDir } from '@/common/constans/main';
+import { PLUGIN_INSTALL_DIR as baseDir } from '@/common/constants/main';
 import localConfig from '@/main/common/initLocalConfig';
 import { WINDOW_CONFIG } from '@/common/constants';
 
