@@ -154,15 +154,22 @@ const optionsManager = ({ searchValue, appList, openPlugin, currentPlugin }) => 
   watch(searchValue, () => search(searchValue.value));
 
   // search Input operation
-  const search = debounce((value) => {
-    if (currentPlugin.value.name) return;
-    if (clipboardFile.value.length) return;
-    if (!value) {
-      optionsRef.value = [];
-      return;
+  const search = debounce(
+    (value) => {
+      if (currentPlugin.value.name) return;
+      if (clipboardFile.value.length) return;
+      if (!value) {
+        optionsRef.value = [];
+        return;
+      }
+      optionsRef.value = getOptionsFromSearchValue(value);
+    },
+    100,
+    {
+      leading: true, // 立即执行
+      trailing: false, // 延迟结束时不执行
     }
-    optionsRef.value = getOptionsFromSearchValue(value);
-  }, 500);
+  );
 
   const setOptionsRef = (options) => {
     optionsRef.value = options;
