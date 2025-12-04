@@ -138,6 +138,19 @@ const keydownEvent = (e, key: string) => {
   }
 };
 
+// 监听主进程发来的 ESC 键事件
+ipcRenderer.on('escape-key-pressed', () => {
+  // 如果输入框有内容，清空内容
+  if (props.searchValue) {
+    emit('clearSearchValue');
+  } else {
+    // 输入框没有内容，隐藏窗口
+    ipcRenderer.send('msg-trigger', {
+      type: 'hideWindow',
+    });
+  }
+});
+
 const checkNeedInit = (e) => {
   const { ctrlKey, metaKey } = e;
 

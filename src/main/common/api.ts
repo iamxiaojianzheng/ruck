@@ -79,9 +79,12 @@ class API extends DBInstance {
     if (!(input.meta || input.control || input.shift || input.alt)) {
       if (input.key === 'Escape') {
         if (this.currentPlugin) {
+          // 有插件运行时，退出插件
           this.removePlugin(null, window);
         } else {
-          mainInstance.windowCreator.getWindow().hide();
+          // 没有插件运行时，通知渲染进程处理 ESC 键
+          // 渲染进程会根据输入框内容决定清空还是隐藏窗口
+          window.webContents.send('escape-key-pressed');
         }
       }
 
@@ -151,6 +154,13 @@ class API extends DBInstance {
   public rendererReady() {
     mainInstance.setRendererReady(true);
     return { success: true };
+  }
+
+  /**
+   * 隐藏主窗口
+   */
+  public hideWindow() {
+    mainInstance.windowCreator.getWindow().hide();
   }
 
   public openPluginDevTools() {
