@@ -24,6 +24,7 @@ class App {
   public windowCreator: { init: () => void; getWindow: () => BrowserWindow };
   // 系统插件管理器
   private systemPlugins: any;
+  private isRendererReady = false; // 渲染进程就绪标志
 
   constructor() {
     // 注册自定义协议
@@ -46,6 +47,23 @@ class App {
       this.onRunning();
       this.onQuit();
     }
+  }
+
+  /**
+   * 设置渲染进程就绪状态
+   */
+  public setRendererReady(ready: boolean): void {
+    this.isRendererReady = ready;
+    if (ready) {
+      console.log('渲染进程初始化完成，窗口现在可以显示');
+    }
+  }
+
+  /**
+   * 获取渲染进程就绪状态
+   */
+  public getRendererReady(): boolean {
+    return this.isRendererReady;
   }
 
   /**

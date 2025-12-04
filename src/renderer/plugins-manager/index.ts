@@ -33,6 +33,11 @@ const createPluginManager = (): any => {
     initPluginHistory();
     appList.value = await appSearch(nativeImage);
     initLocalStartPlugin();
+
+    // 通知主进程：渲染进程初始化完成
+    ipcRenderer.send('msg-trigger', {
+      type: 'rendererReady',
+    });
   };
 
   const initPluginHistory = () => {
@@ -48,9 +53,7 @@ const createPluginManager = (): any => {
 
     if (result && result.data) {
       const validHistory = result.data.filter((item: any) =>
-        localPlugins.some((p: any) =>
-          p.name === item.name || p.name === item.originName
-        )
+        localPlugins.some((p: any) => p.name === item.name || p.name === item.originName)
       );
 
       if (validHistory.length !== result.data.length) {

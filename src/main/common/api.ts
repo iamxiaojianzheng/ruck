@@ -145,6 +145,14 @@ class API extends DBInstance {
     this.currentPlugin = null;
   }
 
+  /**
+   * 渲染进程初始化完成通知
+   */
+  public rendererReady() {
+    mainInstance.setRendererReady(true);
+    return { success: true };
+  }
+
   public openPluginDevTools() {
     runnerInstance.getView().webContents.openDevTools({ mode: 'detach' });
   }

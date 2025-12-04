@@ -8,6 +8,7 @@ import commonConst from '@/common/utils/commonConst';
 import localConfig from '@/main/common/initLocalConfig';
 import { mainWindowShowAndHide } from './mainWindow';
 import { guide } from '../browsers';
+import mainInstance from '../index';
 
 let mousedown = false;
 let mousedownPoint = { x: 0, y: 0 };
@@ -66,6 +67,11 @@ function createTray(window: BrowserWindow): Promise<Tray> {
     const appTray = new Tray(path.join(__static, icon));
 
     const openSettings = () => {
+      // 检查渲染进程是否就绪
+      if (!mainInstance.getRendererReady()) {
+        console.log('渲染进程尚未就绪');
+        return;
+      }
       window.webContents.executeJavaScript(
         `window.rubick && window.rubick.openMenu && window.rubick.openMenu({ code: "settings" })`
       );
@@ -100,7 +106,7 @@ function createTray(window: BrowserWindow): Promise<Tray> {
         {
           label: '显示',
           click() {
-            window.show();
+            mainWindowShowAndHide(window);
           },
         },
         {
