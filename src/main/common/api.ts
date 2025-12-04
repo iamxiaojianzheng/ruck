@@ -74,7 +74,7 @@ class API extends DBInstance {
     return originWindow;
   };
 
-  public __EscapeKeyDown = (event, input, window) => {
+  public __EscapeKeyDown = (event: Electron.Event, input: Electron.Input, window: BrowserWindow) => {
     if (input.type !== 'keyDown') return;
     if (!(input.meta || input.control || input.shift || input.alt)) {
       if (input.key === 'Escape') {
@@ -92,7 +92,7 @@ class API extends DBInstance {
     }
   };
 
-  public windowMoving({ data: { mouseX, mouseY, width, height } }, window, e) {
+  public windowMoving({ data: { mouseX, mouseY, width, height } }: { data: { mouseX: number; mouseY: number; width: number; height: number } }, window: BrowserWindow, e: Electron.IpcMainEvent) {
     const { x, y } = screen.getCursorScreenPoint();
     const originWindow = this.getCurrentWindow(window, e);
     if (!originWindow) return;
@@ -100,12 +100,12 @@ class API extends DBInstance {
     getWinPosition.setPosition(x - mouseX, y - mouseY);
   }
 
-  public loadPlugin({ data: plugin }, window) {
+  public loadPlugin({ data: plugin }: { data: any }, window: BrowserWindow) {
     window.webContents.executeJavaScript(`window.loadPlugin(${JSON.stringify(plugin)})`);
     this.openPlugin({ data: plugin }, window);
   }
 
-  public openPlugin({ data: plugin }, window) {
+  public openPlugin({ data: plugin }: { data: any }, window: BrowserWindow) {
     if (plugin.platform && !plugin.platform.includes(process.platform)) {
       return new Notification({
         title: `插件不支持当前 ${process.platform} 系统`,
@@ -143,7 +143,7 @@ class API extends DBInstance {
     }
   }
 
-  public removePlugin(e, window) {
+  public removePlugin(e: any, window: BrowserWindow) {
     runnerInstance.removeView(window);
     this.currentPlugin = null;
   }
@@ -167,19 +167,19 @@ class API extends DBInstance {
     runnerInstance.getView().webContents.openDevTools({ mode: 'detach' });
   }
 
-  public hideMainWindow(arg, window) {
+  public hideMainWindow(arg: any, window: BrowserWindow) {
     window.hide();
   }
 
-  public showMainWindow(arg, window) {
+  public showMainWindow(arg: any, window: BrowserWindow) {
     window.show();
   }
 
-  public showOpenDialog({ data }, window) {
+  public showOpenDialog({ data }: { data: Electron.OpenDialogOptions }, window: BrowserWindow) {
     return dialog.showOpenDialogSync(window, data);
   }
 
-  public showSaveDialog({ data }, window) {
+  public showSaveDialog({ data }: { data: Electron.SaveDialogOptions }, window: BrowserWindow) {
     return dialog.showSaveDialogSync(window, data);
   }
 
