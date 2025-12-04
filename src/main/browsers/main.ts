@@ -64,6 +64,7 @@ export default () => {
 
     win.on('show', () => {
       isBlur = false;
+      // 触发主窗口的 onShow hook
       win.webContents.executeJavaScript(
         `window.rubick && window.rubick.hooks && typeof window.rubick.hooks.onShow === "function" && window.rubick.hooks.onShow()`
       );
@@ -72,6 +73,7 @@ export default () => {
     });
 
     win.on('hide', () => {
+      // 触发主窗口的 onHide hook
       win.webContents.executeJavaScript(
         `window.rubick && window.rubick.hooks && typeof window.rubick.hooks.onHide === "function" && window.rubick.hooks.onHide()`
       );

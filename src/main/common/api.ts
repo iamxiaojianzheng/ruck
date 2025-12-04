@@ -13,6 +13,28 @@ import mainInstance from '../index';
 import { runner, detach } from '../browsers';
 import DBInstance from './db';
 import getWinPosition from './getWinPosition';
+import path from 'path';
+import commonConst from '@/common/utils/commonConst';
+import { copyFilesToWindowsClipboard } from './windowsClipboard';
+
+/**
+ *  sanitize input files 剪贴板文件合法性校验
+ * @param input
+ * @returns
+ */
+const sanitizeInputFiles = (input: unknown): string[] => {
+  const candidates = Array.isArray(input) ? input : typeof input === 'string' ? [input] : [];
+  return candidates
+    .map((filePath) => (typeof filePath === 'string' ? filePath.trim() : ''))
+    .filter((filePath) => {
+      if (!filePath) return false;
+      try {
+        return fs.existsSync(filePath);
+      } catch {
+        return false;
+      }
+    });
+};
 
 const runnerInstance = runner();
 const detachInstance = detach();
@@ -28,14 +50,19 @@ class API extends DBInstance {
     });
     // 按 ESC 退出插件
     mainWindow.webContents.on('before-input-event', (event, input) => this.__EscapeKeyDown(event, input, mainWindow));
+    // 设置主窗口的 show/hide 事件监听
+    this.setupMainWindowHooks(mainWindow);
+  }
 
-    mainWindow.webContents.on('before-input-event', (event, input) => {
-      if (input.key.toLowerCase() === 'd' && (input.control || input.meta) && !input.alt && !input.shift) {
-        event.preventDefault();
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          this.detachPlugin(null, mainWindow);
-        }
-      }
+  private setupMainWindowHooks(mainWindow: BrowserWindow) {
+    mainWindow.on('show', () => {
+      // 触发插件的 onShow hook
+      runnerInstance.executeHooks('Show', null);
+    });
+
+    mainWindow.on('hide', () => {
+      // 触发插件的 onHide hook
+      runnerInstance.executeHooks('Hide', null);
     });
   }
 
@@ -221,31 +248,26 @@ class API extends DBInstance {
   }
 
   public copyFile({ data }) {
-    const { file } = data;
-    if (!file) {
+    const targetFiles = sanitizeInputFiles(data?.file);
+
+    if (!targetFiles.length) {
       return false;
     }
-    let files = [];
-    if (typeof file === 'string') {
-      if (!fs.existsSync(file)) {
+
+    if (process.platform === 'darwin') {
+      try {
+        clipboard.writeBuffer('NSFilenamesPboardType', Buffer.from(plist.build(targetFiles)));
+        return true;
+      } catch {
         return false;
       }
-      files = [file];
-    } else if (Array.isArray(file)) {
-      if (file.length === 0) {
-        return false;
-      }
-      file.forEach((item) => {
-        if (fs.existsSync(item)) {
-          files.push(item);
-        }
-      });
     }
-    if (files.length === 0) {
-      return false;
+
+    if (process.platform === 'win32') {
+      return copyFilesToWindowsClipboard(targetFiles);
     }
-    clipboardFiles.writeFiles(typeof file === 'string' ? [file] : file);
-    return true;
+
+    return false;
   }
 
   public getFeatures() {

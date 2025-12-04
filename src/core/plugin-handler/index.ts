@@ -31,7 +31,17 @@ class AdapterHandler {
     // 初始化插件存放
     if (!fs.existsSync(options.baseDir)) {
       fs.mkdirsSync(options.baseDir);
-      fs.writeFileSync(`${options.baseDir}/package.json`, '{"dependencies":{}}');
+      fs.writeFileSync(
+        `${options.baseDir}/package.json`,
+        // '{"dependencies":{}}'
+        // fix 插件安装时node版本问题
+        JSON.stringify({
+          dependencies: {},
+          volta: {
+            node: '16.19.1',
+          },
+        })
+      );
     }
     this.baseDir = options.baseDir;
 
