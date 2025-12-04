@@ -203,10 +203,26 @@ const deletePlugin = async (plugin) => {
     errorUnDownload(plugin.name);
     message.error('卸载超时，请重试！');
   }, 20000);
-  await window.market.deletePlugin(plugin);
-  removePluginToSuperPanel({ name: plugin.name });
-  updateLocalPlugin();
-  clearTimeout(timer);
+  
+  try {
+    await window.market.deletePlugin(plugin);
+    removePluginToSuperPanel({ name: plugin.name });
+    await updateLocalPlugin();
+    clearTimeout(timer);
+    
+    // 验证插件是否真的被删除
+    const stillExists = localPlugins.value.some(p => p.name === plugin.name);
+    if (stillExists) {
+      errorUnDownload(plugin.name);
+      message.error('插件卸载失败，请重试！');
+    } else {
+      message.success(`插件「${plugin.pluginName}」卸载成功！`);
+    }
+  } catch (error) {
+    clearTimeout(timer);
+    errorUnDownload(plugin.name);
+    message.error(`插件卸载失败：${error.message || '未知错误'}`);
+  }
 };
 
 const gotoFinder = () => {
