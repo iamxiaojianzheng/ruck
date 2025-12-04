@@ -1,6 +1,6 @@
 import path from 'path';
 import { message } from 'ant-design-vue';
-import { reactive, toRefs, ref } from 'vue';
+import { reactive, toRefs, ref, Ref } from 'vue';
 import { getGlobal } from '@electron/remote';
 import { nativeImage, ipcRenderer } from 'electron';
 
@@ -12,13 +12,23 @@ import optionsManager from './options';
 import { exec } from 'child_process';
 import { PluginHandler } from '@/core';
 import { PLUGIN_INSTALL_DIR as baseDir, PLUGIN_HISTORY } from '@/renderer/constants/renderer';
+import type { PluginInfo } from '@/types';
 
-const createPluginManager = (): any => {
+interface PluginManagerState {
+  appList: any[];
+  plugins: PluginInfo[];
+  localPlugins: PluginInfo[];
+  currentPlugin: Partial<PluginInfo>;
+  pluginLoading: boolean;
+  pluginHistory: PluginInfo[];
+}
+
+const createPluginManager = () => {
   const pluginInstance = new PluginHandler({
     baseDir,
   });
 
-  const state: any = reactive({
+  const state = reactive<PluginManagerState>({
     appList: [],
     plugins: [],
     localPlugins: [],
@@ -27,7 +37,7 @@ const createPluginManager = (): any => {
     pluginHistory: [],
   });
 
-  const appList: any = ref([]);
+  const appList: Ref<any[]> = ref([]);
 
   const initPlugins = async () => {
     initPluginHistory();

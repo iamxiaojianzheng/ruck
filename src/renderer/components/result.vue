@@ -47,9 +47,9 @@ const remote = window.require('@electron/remote');
 
 declare const __static: string;
 
-const config: any = ref(localConfig.getConfig());
+const config = ref(localConfig.getConfig());
 
-const props: any = defineProps({
+const props = defineProps({
   searchValue: {
     type: [String, Number],
     default: '',

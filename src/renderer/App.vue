@@ -127,7 +127,7 @@ const changeIndex = (index: number) => {
 };
 
 // 打开插件市场菜单
-const openMenu = (ext: any) => {
+const openMenu = (ext: Record<string, any>) => {
   openPlugin({
     ...toRaw(menuPluginInfo.value),
     feature: menuPluginInfo.value.features[0],

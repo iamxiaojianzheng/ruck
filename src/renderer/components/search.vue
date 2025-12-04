@@ -44,14 +44,15 @@
 import { defineProps, defineEmits, ref } from 'vue';
 import { ipcRenderer } from 'electron';
 import { MoreOutlined } from '@ant-design/icons-vue';
+import type { Ref } from 'vue';
 
 const remote = window.require('@electron/remote');
 import localConfig from '../confOp';
 const { Menu } = remote;
 
-const config: any = ref(localConfig.getConfig());
+const config: Ref = ref(localConfig.getConfig());
 
-const props: any = defineProps({
+const props = defineProps({
   searchValue: {
     type: [String, Number],
     default: '',
