@@ -3,13 +3,14 @@ import path from 'path';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 // import versonHandler from '../common/versionHandler';
 import { uIOhook } from 'uiohook-napi';
+import * as remote from '@electron/remote/main';
 
 import localConfig from '@/main/common/initLocalConfig';
 import commonConst from '../../common/utils/commonConst';
 import { APP_NAME, WINDOW_CONFIG } from '@/common/constants';
 import type { MainWindowInstance } from '@/types';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-require('@electron/remote/main').initialize();
+remote.initialize();
 
 export default () => {
   let win: MainWindowInstance;
@@ -17,9 +18,8 @@ export default () => {
 
   const init = () => {
     createWindow();
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     if (win) {
-      require('@electron/remote/main').enable(win.webContents);
+      remote.enable(win.webContents);
     }
   };
 

@@ -18,6 +18,7 @@ module.exports = {
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'vue/multi-word-component-names': 'off',
     '@typescript-eslint/no-unused-vars': 'off',
+    '@typescript-eslint/no-this-alias': 'off',
     'prettier/prettier': [
       'warn',
       {
@@ -25,4 +26,12 @@ module.exports = {
       },
     ],
   },
+  overrides: [
+    {
+      files: ['*.d.ts'],
+      rules: {
+        'no-var': 'off', // Allow var in declaration files for global declarations
+      },
+    },
+  ],
 };

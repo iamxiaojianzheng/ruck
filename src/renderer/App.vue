@@ -44,6 +44,7 @@ import createPluginManager from './plugins-manager';
 import useDrag from '../common/utils/dragWindow';
 import localConfig from './confOp';
 import { PLUGIN_HISTORY } from '@/renderer/constants/renderer';
+import type { PluginInfo } from '@/types';
 
 // 拖拽逻辑
 const { onMouseDown, isDrag } = useDrag();
@@ -76,7 +77,7 @@ const {
 initPlugins();
 
 const currentSelect = ref(0);
-const menuPluginInfo = ref<any>({});
+const menuPluginInfo = ref<Partial<PluginInfo>>({});
 const config = ref<any>(localConfig.getConfig());
 
 // 获取插件市场信息

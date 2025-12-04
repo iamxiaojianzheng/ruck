@@ -4,84 +4,84 @@
 
 /** 插件基本信息 */
 export interface PluginInfo {
-    /** 插件类型 */
-    type?: 'adapter' | 'ui';
-    /** 插件唯一标识 */
-    name: string;
-    /** 插件显示名称 */
-    pluginName: string;
-    /** 插件作者 */
-    author: string;
-    /** 插件描述 */
-    description: string;
-    /** 插件版本 */
-    version: string;
-    /** 插件图标 */
-    logo: string;
-    /** 插件图标（别名） */
-    icon?: string;
-    /** 插件入口文件 */
-    main?: string;
-    /** 插件功能列表 */
-    features?: Feature[];
-    /** 是否正在加载 */
-    isloading?: boolean;
-    /** 原始名称（用于历史记录） */
-    originName?: string;
-    /** 是否固定 */
-    pin?: boolean;
+  /** 插件类型 */
+  type?: 'adapter' | 'ui';
+  /** 插件唯一标识 */
+  name: string;
+  /** 插件显示名称 */
+  pluginName: string;
+  /** 插件作者 */
+  author: string;
+  /** 插件描述 */
+  description: string;
+  /** 插件版本 */
+  version: string;
+  /** 插件图标 */
+  logo: string;
+  /** 插件图标（别名） */
+  icon?: string;
+  /** 插件入口文件 */
+  main?: string;
+  /** 插件功能列表 */
+  features?: Feature[];
+  /** 是否正在加载 */
+  isloading?: boolean;
+  /** 原始名称（用于历史记录） */
+  originName?: string;
+  /** 是否固定 */
+  pin?: boolean;
 }
 
 /** 插件功能定义 */
 export interface Feature {
-    /** 功能标识 */
-    code: string;
-    /** 功能说明 */
-    explain: string;
-    /** 触发命令列表 */
-    cmds: Array<Cmd | string>;
+  /** 功能标识 */
+  code: string;
+  /** 功能说明 */
+  explain: string;
+  /** 触发命令列表 */
+  cmds: Array<Cmd | string>;
 }
 
 /** 命令定义 */
 export interface Cmd {
-    /** 命令标签 */
-    label: string;
-    /** 命令类型 */
-    type?: 'text' | 'img' | 'over' | 'file' | 'files' | 'regex';
-    /** 文件类型 */
-    fileType?: string;
-    /** 匹配规则 */
-    match?: CmdMatch;
+  /** 命令标签 */
+  label: string;
+  /** 命令类型 */
+  type?: 'text' | 'img' | 'over' | 'file' | 'files' | 'regex';
+  /** 文件类型 */
+  fileType?: string;
+  /** 匹配规则 */
+  match?: CmdMatch;
 }
 
 /** 命令匹配规则 */
 export interface CmdMatch {
-    /** 应用名称列表 */
-    app?: string[];
-    /** 类名列表 */
-    class?: string[];
+  /** 应用名称列表 */
+  app?: string[];
+  /** 类名列表 */
+  class?: string[];
 }
 
 /** 文件信息 */
 export interface FileInfo {
-    /** 是否为文件 */
-    isFile: boolean;
-    /** 是否为目录 */
-    isDirectory: boolean;
-    /** 文件名 */
-    name: string;
-    /** 文件绝对路径 */
-    path: string;
+  /** 是否为文件 */
+  isFile: boolean;
+  /** 是否为目录 */
+  isDirectory: boolean;
+  /** 文件名 */
+  name: string;
+  /** 文件绝对路径 */
+  path: string;
 }
 
 /** 插件上下文 */
 export interface PluginContext {
-    /** 功能标识 */
-    code: string;
-    /** 触发类型 */
-    type: 'text' | 'img' | 'files' | 'regex' | 'over' | 'window';
-    /** 载荷数据 */
-    payload:
+  /** 功能标识 */
+  code: string;
+  /** 触发类型 */
+  type: 'text' | 'img' | 'files' | 'regex' | 'over' | 'window';
+  /** 载荷数据 */
+  payload:
     | string // text/regex/over
     | string // img (Base64)
     | FileInfo[] // files
@@ -93,22 +93,22 @@ export type PluginStatus = 'RUNNING' | 'STOPPED' | 'ERROR';
 
 /** 插件操作选项 */
 export interface PluginOption {
-    /** 选项名称 */
-    name: string;
-    /** 选项值 */
-    value: string;
-    /** 选项图标 */
-    icon: string;
-    /** 选项描述 */
-    desc: string;
-    /** 选项类型 */
-    type: string;
-    /** 匹配位置 */
-    match: [number, number] | false;
-    /** 显示优先级 */
-    zIndex: number;
-    /** 点击回调 */
-    click: () => void;
-    /** logo路径 */
-    logoPath?: string;
+  /** 选项名称 */
+  name: string;
+  /** 选项值 */
+  value: string;
+  /** 选项图标 */
+  icon: string;
+  /** 选项描述 */
+  desc: string;
+  /** 选项类型 */
+  type: string;
+  /** 匹配位置 */
+  match: [number, number] | false;
+  /** 显示优先级 */
+  zIndex: number;
+  /** 点击回调 */
+  click: () => void;
+  /** logo路径 */
+  logoPath?: string;
 }

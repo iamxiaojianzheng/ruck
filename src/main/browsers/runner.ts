@@ -1,4 +1,5 @@
 import { BrowserView, BrowserWindow, session } from 'electron';
+import * as remote from '@electron/remote/main';
 import path from 'path';
 import fs from 'fs';
 import commonConst from '../../common/utils/commonConst';
@@ -61,7 +62,7 @@ export default (): RunnerBrowser => {
     console.log('runner init', view, view?.webContents?.id);
     if (view === null || view === undefined || view.inDetach) {
       createView(plugin, window);
-      require('@electron/remote/main').enable(view.webContents);
+      remote.enable(view.webContents);
     }
   };
 

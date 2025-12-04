@@ -92,7 +92,13 @@ class API extends DBInstance {
     }
   };
 
-  public windowMoving({ data: { mouseX, mouseY, width, height } }: { data: { mouseX: number; mouseY: number; width: number; height: number } }, window: BrowserWindow, e: Electron.IpcMainEvent) {
+  public windowMoving(
+    {
+      data: { mouseX, mouseY, width, height },
+    }: { data: { mouseX: number; mouseY: number; width: number; height: number } },
+    window: BrowserWindow,
+    e: Electron.IpcMainEvent
+  ) {
     const { x, y } = screen.getCursorScreenPoint();
     const originWindow = this.getCurrentWindow(window, e);
     if (!originWindow) return;
