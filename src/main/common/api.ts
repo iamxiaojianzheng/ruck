@@ -13,9 +13,7 @@ import mainInstance from '../index';
 import { runner, detach } from '../browsers';
 import DBInstance from './db';
 import getWinPosition from './getWinPosition';
-import path from 'path';
-import commonConst from '@/common/utils/commonConst';
-import { copyFilesToWindowsClipboard } from './windowsClipboard';
+// import { copyFilesToWindowsClipboard } from './windowsClipboard';
 
 /**
  *  sanitize input files 剪贴板文件合法性校验
@@ -254,19 +252,7 @@ class API extends DBInstance {
       return false;
     }
 
-    if (process.platform === 'darwin') {
-      try {
-        clipboard.writeBuffer('NSFilenamesPboardType', Buffer.from(plist.build(targetFiles)));
-        return true;
-      } catch {
-        return false;
-      }
-    }
-
-    if (process.platform === 'win32') {
-      return copyFilesToWindowsClipboard(targetFiles);
-    }
-
+    clipboardFiles.writeFiles(targetFiles);
     return false;
   }
 
