@@ -104,6 +104,7 @@ export default () => {
       });
 
       win.show();
+      win.focus();
     });
 
     // 最大化设置

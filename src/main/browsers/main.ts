@@ -74,6 +74,7 @@ export default () => {
       if (!allowResize) {
         // 阻止手动拖拽调整
         event.preventDefault();
+        win.emit('user-resize-attempt');
       }
     });
 

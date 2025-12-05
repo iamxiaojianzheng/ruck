@@ -62,6 +62,10 @@ class API extends DBInstance {
       // 触发插件的 onHide hook
       runnerInstance.executeHooks('Hide', null);
     });
+
+    mainWindow.on('user-resize-attempt' as any, () => {
+      this.detachPlugin(null, mainWindow);
+    });
   }
 
   public isDev = (): boolean => {
