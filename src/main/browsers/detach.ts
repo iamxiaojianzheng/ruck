@@ -161,6 +161,7 @@ export default () => {
       if (input.type !== 'keyDown') return;
       if (!(input.meta || input.control || input.shift || input.alt)) {
         if (input.key === 'Escape') {
+          event.preventDefault(); // 阻止默认行为
           operation.endFullScreen();
         }
         return;

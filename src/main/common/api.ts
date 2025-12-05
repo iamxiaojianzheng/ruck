@@ -78,6 +78,7 @@ class API extends DBInstance {
     if (input.type !== 'keyDown') return;
     if (!(input.meta || input.control || input.shift || input.alt)) {
       if (input.key === 'Escape') {
+        event.preventDefault(); // 阻止ESC的默认行为，避免竞态条件
         if (this.currentPlugin) {
           // 有插件运行时，退出插件
           this.removePlugin(null, window);
