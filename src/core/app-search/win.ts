@@ -100,6 +100,5 @@ function fileDisplay(filePath: string) {
 export default () => {
   fileDisplay(filePath);
   fileDisplay(startMenu);
-  console.log(fileLists);
   return fileLists;
 };

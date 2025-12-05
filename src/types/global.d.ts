@@ -36,6 +36,7 @@ interface Option {
   match: [number, number] | false;
   zIndex: number;
   click: () => void;
+  keyWords?: string[];
 }
 
 // declare global {

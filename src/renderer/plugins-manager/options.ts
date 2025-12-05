@@ -1,10 +1,11 @@
 import { ref, watch } from 'vue';
 import debounce from 'lodash.debounce';
 import { ipcRenderer } from 'electron';
-import { getGlobal } from '@electron/remote';
-import PinyinMatch from 'pinyin-match';
+import type { Cmd, Feature, PluginOption as Option } from '@/types';
 import pluginClickEvent from './pluginClickEvent';
 import clipboardWatch from './clipboardWatch';
+import { cachedPinyinMatch } from './cache';
+import { getPluginIndex, type PluginIndexItem } from './search/plugin-index';
 
 /**
  * 字符串格式化为正则表达式
@@ -21,7 +22,7 @@ function formatReg(regStr: string) {
 function matchCmds(cmds: Cmd[], value: string, strict = false) {
   return cmds.filter((cmd) => {
     if (typeof cmd === 'string') {
-      return !!PinyinMatch.match(cmd, value);
+      return !!cachedPinyinMatch(cmd, value);
     }
     if (cmd.type === 'regex' && typeof cmd.match === 'string' && !strict) {
       const match: string = cmd.match;
@@ -45,7 +46,7 @@ const optionsManager = ({ searchValue, appList, openPlugin, currentPlugin }) => 
 
   const getIndex = (cmd, value: string) => {
     let index = 0;
-    if (PinyinMatch.match(cmd.label || cmd, value)) {
+    if (cachedPinyinMatch(cmd.label || cmd, value)) {
       index += 1;
     }
     if (cmd.label) {
@@ -74,7 +75,7 @@ const optionsManager = ({ searchValue, appList, openPlugin, currentPlugin }) => 
       icon: logoPath || pluginLogo,
       desc: featureExplain,
       type: pluginType,
-      match: PinyinMatch.match(cmdLabel, payload),
+      match: cachedPinyinMatch(cmdLabel, payload),
       zIndex: getIndex(cmd, payload), // 排序权重
       click: () => {
         let ext = null;
@@ -92,25 +93,36 @@ const optionsManager = ({ searchValue, appList, openPlugin, currentPlugin }) => 
   };
 
   /**
-   * 从搜索值中获取插件选项
+   * 从搜索值中获取插件选项（使用索引优化）
    */
   const getOptionsFromSearchValue = (value: string, strict = false) => {
-    const localPlugins = getGlobal('LOCAL_PLUGINS').getLocalPlugins();
     let options: Option[] = [];
 
-    // 先搜索 plugin
-    localPlugins.forEach((plugin) => {
-      const features = plugin.features;
-      if (!features) return;
-
-      for (const feature of features) {
-        const cmds = matchCmds(feature.cmds, value, strict);
-        for (const cmd of cmds) {
-          const option = buildPluginOption(plugin, feature, cmd, value, openPlugin);
-          options.push(option);
+    // 使用插件索引搜索（从 search 模块）
+    const index = getPluginIndex();
+    options = index
+      .filter((item: PluginIndexItem) => {
+        // 字符串命令：拼音匹配
+        if (typeof item.cmd === 'string') {
+          return cachedPinyinMatch(item.cmdLabel, value);
         }
-      }
-    });
+
+        // 正则匹配
+        if (item.cmd.type === 'regex' && typeof item.cmd.match === 'string' && !strict) {
+          const match: string = item.cmd.match;
+          return formatReg(match).test(value);
+        }
+
+        // over 类型（总是匹配）
+        if (item.cmd.type === 'over' && !strict) {
+          return true;
+        }
+
+        return false;
+      })
+      .map((item: PluginIndexItem) => {
+        return buildPluginOption(item.plugin, item.feature, item.cmd, value, openPlugin);
+      });
 
     // 再搜索 app
     const appPlugins = appList.value || [];
@@ -123,7 +135,7 @@ const optionsManager = ({ searchValue, appList, openPlugin, currentPlugin }) => 
             descMap.set(plugin, true);
             let has = false;
             plugin.keyWords.some((keyword) => {
-              const match = PinyinMatch.match(keyword, value);
+              const match = cachedPinyinMatch(keyword, value);
               if (match) {
                 has = keyword;
                 plugin.name = keyword;
@@ -133,21 +145,26 @@ const optionsManager = ({ searchValue, appList, openPlugin, currentPlugin }) => 
               return false;
             });
             return has;
-          } else {
-            return false;
           }
+          return false;
         })
         .map((plugin) => {
-          const option = {
-            ...plugin,
-            zIndex: 0,
-            click: () => {
-              openPlugin(plugin, option);
-            },
+          return {
+            name: plugin.name,
+            value: plugin.value || 'app',
+            icon: plugin.icon,
+            desc: plugin.desc,
+            match: plugin.match,
+            click: plugin.click,
+            keyWords: plugin.keyWords,
           };
-          return option;
         }),
     ];
+
+    // 排序
+    options.sort((a, b) => {
+      return (b.zIndex || 0) - (a.zIndex || 0);
+    });
     return options;
   };
 

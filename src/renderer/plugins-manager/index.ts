@@ -8,6 +8,7 @@ import appSearch from '@/core/app-search';
 import commonConst from '@/common/utils/commonConst';
 import searchManager from './search';
 import optionsManager from './options';
+import { rebuildPluginIndex } from './search/plugin-index';
 
 import { exec } from 'child_process';
 import { PluginHandler } from '@/core';
@@ -43,6 +44,9 @@ const createPluginManager = () => {
     initPluginHistory();
     appList.value = await appSearch(nativeImage);
     initLocalStartPlugin();
+
+    // 构建插件搜索索引（性能优化）
+    rebuildPluginIndex();
 
     // 通知主进程：渲染进程初始化完成
     ipcRenderer.send('msg-trigger', {
