@@ -129,7 +129,7 @@ class App {
       });
 
       // 注册全局快捷键
-      registerHotKey(this.windowCreator.getWindow());
+      registerHotKey(this.windowCreator.getWindow(), API);
 
       // 触发系统插件的 ready 钩子
       this.systemPlugins.triggerReadyHooks(

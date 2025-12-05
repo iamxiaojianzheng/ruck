@@ -4,7 +4,7 @@ import localConfig from '@/main/common/initLocalConfig';
 import { mainWindowShowAndHide } from './mainWindow';
 import { uIOhook, UiohookKey } from 'uiohook-napi';
 
-const registerHotKey = (mainWindow: BrowserWindow): void => {
+const registerHotKey = (mainWindow: BrowserWindow, API: any): void => {
   // 设置开机启动
   const setAutoLogin = async () => {
     const config = await localConfig.getConfig();
@@ -84,8 +84,9 @@ const registerHotKey = (mainWindow: BrowserWindow): void => {
       // mainWindow.show();
     });
 
-    // globalShortcut.register(config.perf.shortCut.separate, () => {
-    // });
+    globalShortcut.register(config.perf.shortCut.separate, () => {
+      API.detachPlugin(null, mainWindow);
+    });
 
     // 添加局部快捷键监听
     // mainWindow.webContents.on('before-input-event', (event, input) => {
