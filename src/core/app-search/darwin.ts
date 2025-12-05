@@ -23,39 +23,9 @@ async function getAppIcon(appPath: string, nativeImage: any, name: string) {
     const existsnone = fs.existsSync(iconnone);
     if (exists) return true;
     if (existsnone) return false;
-    // const appName: string = appPath.split('/').pop() || '';
-    // const extname: string = path.extname(appName);
-    // const appSubStr: string = appName.split(extname)[0];
-    // const path1 = path.join(appPath, `/Contents/Resources/App.icns`);
-    // const path2 = path.join(appPath, `/Contents/Resources/AppIcon.icns`);
-    // const path3 = path.join(appPath, `/Contents/Resources/${appSubStr}.icns`);
-    // const path4 = path.join(
-    //   appPath,
-    //   `/Contents/Resources/${appSubStr.replace(' ', '')}.icns`
-    // );
-    // let iconPath: string = path1;
-    // if (fs.existsSync(path1)) {
-    //   iconPath = path1;
-    // } else if (fs.existsSync(path2)) {
-    //   iconPath = path2;
-    // } else if (fs.existsSync(path3)) {
-    //   iconPath = path3;
-    // } else if (fs.existsSync(path4)) {
-    //   iconPath = path4;
-    // } else {
-    //   // 性能最低的方式
-    //   const resourceList = fs.readdirSync(
-    //     path.join(appPath, `/Contents/Resources`)
-    //   );
-    //   const iconName = resourceList.filter(
-    //     (file) => path.extname(file) === '.icns'
-    //   )[0];
-    //   if (!iconName) {
-    //     fs.writeFileSync(iconnone, '');
-    //     return false;
-    //   }
-    //   iconPath = path.join(appPath, `/Contents/Resources/${iconName}`);
-    // }
+    // 性能最低的方式
+    // const resourceList = fs.readdirSync(path.join(appPath, `/Contents/Resources`));
+    // ... (removed commented out code)
     await getMacApps.app2png(appPath, iconpath);
     return true;
   } catch (e) {
@@ -92,12 +62,7 @@ export default async (nativeImage: any) => {
     };
 
     if (app._name && isZhRegex.test(app._name)) {
-      // const [, pinyinArr] = translate(app._name);
-      // const firstLatter = pinyinArr.map((py) => py[0]);
-      // // 拼音
-      // fileOptions.keyWords.push(pinyinArr.join(''));
-      // // 缩写
-      // fileOptions.keyWords.push(firstLatter.join(''));
+      // 中文
       // 中文
       fileOptions.keyWords.push(app._name);
     }

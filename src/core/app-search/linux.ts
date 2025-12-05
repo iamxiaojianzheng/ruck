@@ -1,14 +1,23 @@
 import path from 'path';
 import originfs from 'original-fs';
 
+interface AppInfo {
+  value: string;
+  pluginType: string;
+  desc: string;
+  icon: string;
+  keyWords: string[];
+  action: string;
+}
+
 const app_paths = [
   '/usr/share/applications',
   '/var/lib/snapd/desktop/applications',
-  `${window.process.env.HOME}/.local/share/applications`,
+  `${(window as any).process.env.HOME}/.local/share/applications`,
 ];
 const emptyIcon = '';
 
-function dirAppRead(dir, target) {
+function dirAppRead(dir: string, target: string[]) {
   let files: Array<string> | null = null;
   try {
     if (!originfs.existsSync(dir)) return;
@@ -16,7 +25,7 @@ function dirAppRead(dir, target) {
   } catch (e) {
     return;
   }
-  if (files.length !== 0) {
+  if (files && files.length !== 0) {
     for (const file of files) {
       const app = path.join(dir, file);
       path.extname(app) === '.desktop' && target.push(app);
@@ -24,17 +33,17 @@ function dirAppRead(dir, target) {
   }
 }
 
-function convertEntryFile2Feature(appPath) {
-  let appInfo: any = null;
+function convertEntryFile2Feature(appPath: string): AppInfo | null {
+  let appInfoStr = '';
   try {
-    appInfo = originfs.readFileSync(appPath, 'utf8');
+    appInfoStr = originfs.readFileSync(appPath, 'utf8');
   } catch (e) {
     return null;
   }
-  if (!appInfo.includes('[Desktop Entry]')) {
+  if (!appInfoStr.includes('[Desktop Entry]')) {
     return null;
   }
-  appInfo = appInfo.substr(appInfo.indexOf('[Desktop Entry]')).replace('[Desktop Entry]', '').trim();
+  appInfoStr = appInfoStr.substring(appInfoStr.indexOf('[Desktop Entry]')).replace('[Desktop Entry]', '').trim();
 
   /**
    * appInfo eg:
@@ -45,17 +54,20 @@ function convertEntryFile2Feature(appPath) {
    * [Desktop Action new-private-window]
    * Name=***
    */
-  const splitIndex = appInfo.indexOf('\n[');
+  const splitIndex = appInfoStr.indexOf('\n[');
 
   if (splitIndex > 0) {
-    appInfo = appInfo.substr(0, splitIndex).trim();
+    appInfoStr = appInfoStr.substring(0, splitIndex).trim();
   }
 
   const targetAppInfo: any = {};
-  appInfo.match(/^[\w\-[\]]+ ?=.*$/gm).forEach((e) => {
-    const index = e.indexOf('=');
-    targetAppInfo[e.substr(0, index).trim()] = e.substr(index + 1).trim();
-  });
+  const matches = appInfoStr.match(/^[\w\-[\]]+ ?=.*$/gm);
+  if (matches) {
+    matches.forEach((e) => {
+      const index = e.indexOf('=');
+      targetAppInfo[e.substring(0, index).trim()] = e.substring(index + 1).trim();
+    });
+  }
 
   /**
    * targetAppInfo = {
@@ -74,7 +86,7 @@ function convertEntryFile2Feature(appPath) {
   if (targetAppInfo.NoDisplay === 'true' && !targetAppInfo.Exec.startsWith('gnome-control-center')) {
     return null;
   }
-  let os = String(window.process.env.DESKTOP_SESSION).toLowerCase();
+  let os = String((window as any).process.env.DESKTOP_SESSION).toLowerCase();
   if (os === 'ubuntu') {
     os = 'gnome';
     if (targetAppInfo.OnlyShowIn && !targetAppInfo.OnlyShowIn.toLowerCase().includes(os)) {
@@ -113,7 +125,7 @@ function convertEntryFile2Feature(appPath) {
     .trim();
   targetAppInfo.Terminal === 'true' && (execPath = 'gnome-terminal -x ' + execPath);
 
-  const info = {
+  const info: AppInfo = {
     value: 'plugin',
     pluginType: 'app',
     desc,
@@ -129,7 +141,7 @@ function convertEntryFile2Feature(appPath) {
   return info;
 }
 
-function getIcon(filePath) {
+function getIcon(filePath: string) {
   const themes = ['ubuntu-mono-dark', 'ubuntu-mono-light', 'Yaru', 'hicolor', 'Adwaita', 'Humanity'];
 
   const sizes = ['48x48', '48', 'scalable', '256x256', '512x512', '256', '512'];
@@ -153,14 +165,17 @@ function getIcon(filePath) {
 }
 
 export default () => {
-  const apps: any = [];
-  const fileList = [];
+  const apps: AppInfo[] = [];
+  const fileList: string[] = [];
   app_paths.forEach((dir) => {
     dirAppRead(dir, fileList);
   });
 
   fileList.forEach((e) => {
-    apps.push(convertEntryFile2Feature(e));
+    const app = convertEntryFile2Feature(e);
+    if (app) {
+      apps.push(app);
+    }
   });
-  return apps.filter((app) => !!app);
+  return apps;
 };

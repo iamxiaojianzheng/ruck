@@ -4,7 +4,7 @@ import plist from 'plist';
 export default function getApps(resolve, reject, filterByAppName = false) {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  let resultBuffer = new Buffer.from([]);
+  let resultBuffer = Buffer.from([]);
 
   const profileInstalledApps = spawn('/usr/sbin/system_profiler', [
     '-xml',

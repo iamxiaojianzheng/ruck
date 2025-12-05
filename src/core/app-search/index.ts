@@ -1,13 +1,17 @@
 import commonConst from '@/common/utils/commonConst';
 
-let appSearch;
+const getAppSearch = () => {
+  if (commonConst.macOS()) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    return require('./darwin').default;
+  } else if (commonConst.windows()) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    return require('./win').default;
+  } else if (commonConst.linux()) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    return require('./linux').default;
+  }
+  return () => Promise.resolve([]);
+};
 
-if (commonConst.macOS()) {
-  appSearch = require('./darwin');
-} else if (commonConst.windows()) {
-  appSearch = require('./win');
-} else if (commonConst.linux()) {
-  appSearch = require('./linux');
-}
-
-export default appSearch.default;
+export default getAppSearch();
