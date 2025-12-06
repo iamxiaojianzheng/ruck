@@ -21,12 +21,7 @@
       :readOnly="readonly"
       :placeholder="pluginLoading ? '更新检测中...' : placeholder || config.perf.custom.placeholder"
       @input="(e) => changeValue(e)"
-      @keydown.left="(e) => keydownEvent(e, 'left')"
-      @keydown.right="(e) => keydownEvent(e, 'right')"
-      @keydown.down="(e) => keydownEvent(e, 'down')"
-      @keydown.tab="(e) => keydownEvent(e, 'down')"
-      @keydown.up="(e) => keydownEvent(e, 'up')"
-      @keydown="(e) => checkNeedInit(e)"
+      @keydown="handleKeydown"
       @keypress.enter="(e) => keydownEvent(e, 'enter')"
       @focus="emit('focus')"
       @blur="handleBlur"
@@ -65,10 +60,16 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  pluginHistory: (() => [])(),
+  pluginHistory: {
+    type: Array,
+    default: () => [],
+  },
   currentPlugin: {},
   pluginLoading: Boolean,
-  clipboardFile: (() => [])(),
+  clipboardFile: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const clickLogo = () => {
@@ -161,6 +162,21 @@ const checkNeedInit = (e) => {
   // 手动粘贴
   if ((ctrlKey || metaKey) && e.key === 'v') {
     emit('readClipboardContent');
+  }
+};
+
+const handleKeydown = (e) => {
+  checkNeedInit(e);
+  
+  let key = '';
+  if (e.key === 'ArrowUp') key = 'up';
+  else if (e.key === 'ArrowDown') key = 'down';
+  else if (e.key === 'ArrowLeft') key = 'left';
+  else if (e.key === 'ArrowRight') key = 'right';
+  else if (e.key === 'Tab') key = 'down';
+
+  if (key) {
+    keydownEvent(e, key);
   }
 };
 
