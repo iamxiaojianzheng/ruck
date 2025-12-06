@@ -262,6 +262,10 @@ const createPluginManager = () => {
     // 重新加载历史记录
     initPluginHistory();
 
+    // 重建插件索引，确保搜索结果是最新的
+    // 这样当用户从插件市场返回主窗口时，能搜索到新安装的插件
+    rebuildPluginIndex();
+
     // 主动聚焦主输入框，确保退出插件后用户可以直接输入
     setTimeout(() => {
       const mainInput = document.getElementById('search');
