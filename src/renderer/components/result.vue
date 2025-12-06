@@ -39,7 +39,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, toRaw, watch } from 'vue';
+import { reactive, ref, toRaw, defineProps, defineEmits } from 'vue';
 import localConfig from '../confOp';
 
 const path = window.require('path');

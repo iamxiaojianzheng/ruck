@@ -28,7 +28,12 @@
     >
       <template #suffix>
         <div class="suffix-tool">
-          <MoreOutlined @click="showSeparate()" class="icon-more" />
+          <PluginMenu
+            :config="config"
+            :currentPlugin="currentPlugin"
+            @updateConfig="updateConfig"
+            @detach="handleDetach"
+          />
         </div>
       </template>
     </a-input>
@@ -38,12 +43,10 @@
 <script setup lang="ts">
 import { defineProps, defineEmits, ref } from 'vue';
 import { ipcRenderer } from 'electron';
-import { MoreOutlined } from '@ant-design/icons-vue';
+import PluginMenu from './PluginMenu.vue';
 import type { Ref } from 'vue';
 
-const remote = window.require('@electron/remote');
 import localConfig from '../confOp';
-const { Menu } = remote;
 
 const config: Ref = ref(localConfig.getConfig());
 
@@ -167,7 +170,7 @@ const checkNeedInit = (e) => {
 
 const handleKeydown = (e) => {
   checkNeedInit(e);
-  
+
   let key = '';
   if (e.key === 'ArrowUp') key = 'up';
   else if (e.key === 'ArrowDown') key = 'down';
@@ -197,72 +200,16 @@ const closeTag = () => {
   });
 };
 
-const showSeparate = () => {
-  let pluginMenu: any = [
-    {
-      label: config.value.perf.common.hideOnBlur ? '钉住' : '自动隐藏',
-      click: changeHideOnBlur,
-    },
-    {
-      label: config.value.perf.common.lang === 'zh-CN' ? '切换语言' : 'Change Language',
-      submenu: [
-        {
-          label: '简体中文',
-          click: () => {
-            changeLang('zh-CN');
-          },
-        },
-        {
-          label: 'English',
-          click: () => {
-            changeLang('en-US');
-          },
-        },
-      ],
-    },
-  ];
-
-  if (props.currentPlugin && props.currentPlugin.logo) {
-    const otherMenu = [
-      // TODO
-      // {
-      //   label: '当前插件信息',
-      //   submenu: [{ label: '简介' }, { label: '功能' }],
-      // },
-      {
-        label: '分离窗口',
-        click: newWindow,
-      },
-    ];
-
-    if (ipcRenderer.sendSync('msg-trigger', { type: 'isDev' })) {
-      otherMenu.unshift({
-        label: '开发者工具',
-        click: () => {
-          ipcRenderer.send('msg-trigger', { type: 'openPluginDevTools' });
-          // todo
-        },
-      });
-    }
-
-    pluginMenu = pluginMenu.concat(otherMenu);
-  }
-  let menu = Menu.buildFromTemplate(pluginMenu);
-  menu.popup();
-};
-
-const changeLang = (lang) => {
-  let cfg = { ...config.value };
-  cfg.perf.common.lang = lang;
-  localConfig.setConfig(JSON.parse(JSON.stringify(cfg)));
+const updateConfig = (cfg: any) => {
+  localConfig.setConfig(cfg);
   config.value = cfg;
 };
 
-const changeHideOnBlur = () => {
-  let cfg = { ...config.value };
-  cfg.perf.common.hideOnBlur = !cfg.perf.common.hideOnBlur;
-  localConfig.setConfig(JSON.parse(JSON.stringify(cfg)));
-  config.value = cfg;
+const handleDetach = () => {
+  ipcRenderer.send('msg-trigger', {
+    type: 'detachPlugin',
+  });
+  // todo
 };
 
 const getIcon = () => {
@@ -275,13 +222,6 @@ const getIcon = () => {
   } catch (e) {
     return require('../assets/file.png');
   }
-};
-
-const newWindow = () => {
-  ipcRenderer.send('msg-trigger', {
-    type: 'detachPlugin',
-  });
-  // todo
 };
 
 const mainInput = ref(null);

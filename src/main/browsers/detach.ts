@@ -177,7 +177,7 @@ export default () => {
           } catch(e) {console.log(e)}
         }
       `;
-      view.webContents.executeJavaScript(evalJs);
+      view?.webContents?.executeJavaScript(evalJs);
     };
     return win;
   };

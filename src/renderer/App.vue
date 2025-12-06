@@ -36,6 +36,7 @@ import { watch, ref, toRaw, onMounted } from 'vue';
 import { exec } from 'child_process';
 import { message } from 'ant-design-vue';
 import { getGlobal } from '@electron/remote';
+import { ipcRenderer } from 'electron';
 
 import Result from './components/result.vue';
 import Search from './components/search.vue';
@@ -186,6 +187,14 @@ const choosePlugin = (plugin: any) => {
   window.rubick.openPlugin(JSON.parse(JSON.stringify(newPluginInfo)));
 
   changePluginHistory(currentChoose);
+
+  // Auto detach if enabled
+  const currentConfig = localConfig.getConfig() as any;
+  if (currentConfig.pluginSettings?.[currentChoose.name]?.autoDetach) {
+     ipcRenderer.send('msg-trigger', {
+      type: 'detachPlugin',
+    });
+  }
 };
 
 const clearSearchValue = () => {

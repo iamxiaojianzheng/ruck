@@ -11,23 +11,27 @@
       />
       <span v-else>{{ pluginInfo.pluginName }}</span>
     </div>
-    <div class="handle-container">
-      <div class="handle">
-        <div class="devtool" v-if="isDev" @click="openDevTool" title="开发者工具"></div>
-        <div :class="pinStatus ? 'pin' : 'unpin'" @click="pinWindow" :title="pinStatus ? '取消置顶' : '置顶'"></div>
-      </div>
-      <div class="window-handle" v-if="process.platform !== 'darwin'">
-        <div class="minimize" @click="minimize"></div>
-        <div class="maximize" @click="maximize"></div>
-        <div class="close" @click="close"></div>
-      </div>
-    </div>
+    <PluginMenu
+      :config="config"
+      :currentPlugin="pluginInfo"
+      :showDetachOption="false"
+      :isDetach="true"
+      :pinStatus="pinStatus"
+      :isDev="isDev"
+      @updateConfig="updateConfig"
+      @togglePin="pinWindow"
+      @openDevTool="openDevTool"
+      @minimize="minimize"
+      @maximize="maximize"
+      @close="close"
+    />
   </div>
 </template>
 
 <script setup>
-import throttle from 'lodash.throttle';
 import { ref, computed } from 'vue';
+import throttle from 'lodash.throttle';
+import PluginMenu from './components/PluginMenu.vue';
 
 const { ipcRenderer } = window.require('electron');
 
@@ -37,6 +41,7 @@ const isDev = ref(false);
 
 const storeInfo = localStorage.getItem('rubick-system-detach') || '{}';
 const pluginInfo = ref({});
+const config = ref({});
 
 window.initDetach = (info) => {
   const { subInput } = info;
@@ -45,6 +50,16 @@ window.initDetach = (info) => {
   showInput.value = subInput && (!!subInput.value || !!subInput.placeholder);
   localStorage.setItem('rubick-system-detach', JSON.stringify(info));
   isDev.value = ipcRenderer.sendSync('msg-trigger', { type: 'isDev' }) === true;
+
+  // Fetch config
+  try {
+    const res = ipcRenderer.sendSync('msg-trigger', { type: 'dbGet', data: { id: 'rubick-local-config' } });
+    if (res && res.data) {
+      config.value = res.data;
+    }
+  } catch (e) {
+    console.error(e);
+  }
 };
 
 const pinStatus = computed(() => {
@@ -80,6 +95,21 @@ const pinWindow = () => {
     ipcRenderer.send('detach:service', { type: 'pin' });
   }
   pluginInfo.value.pin = !pin;
+};
+
+const updateConfig = (cfg) => {
+  config.value = cfg;
+  const res = ipcRenderer.sendSync('msg-trigger', { type: 'dbGet', data: { id: 'rubick-local-config' } });
+  if (res) {
+    ipcRenderer.send('msg-trigger', {
+      type: 'dbPut',
+      data: {
+        _id: 'rubick-local-config',
+        _rev: res._rev,
+        data: cfg,
+      },
+    });
+  }
 };
 
 const minimize = () => {
@@ -209,6 +239,7 @@ body {
 .detach input::-webkit-input-placeholder {
   color: #aaa;
   user-select: none;
+  font-size: 14px;
 }
 
 .detach .info {
@@ -216,74 +247,4 @@ body {
   align-items: center;
 }
 
-.handle {
-  display: flex;
-  -webkit-app-region: no-drag;
-}
-
-.handle > div {
-  width: 36px;
-  height: 36px;
-  border-radius: 18px;
-  cursor: pointer;
-  margin-right: 6px;
-}
-
-.handle > div:hover {
-  background-color: #dee2e6;
-}
-
-.handle .devtool {
-  background: center no-repeat url('./assets/tool.svg');
-}
-
-.handle .pin {
-  background: center no-repeat url('./assets/pin.svg');
-}
-
-.handle .unpin {
-  background: center no-repeat url('./assets/unpin.svg');
-}
-
-.handle-container {
-  display: flex;
-  align-items: center;
-}
-
-.window-handle {
-  display: flex;
-  align-items: center;
-  -webkit-app-region: no-drag;
-}
-
-.window-handle > div {
-  width: 48px;
-  height: 56px;
-  cursor: pointer;
-}
-
-.window-handle > div:hover {
-  background-color: #dee2e6;
-}
-
-.window-handle .minimize {
-  background: center / 20px no-repeat url('./assets/minimize.svg');
-}
-
-.window-handle .maximize {
-  background: center / 20px no-repeat url('./assets/maximize.svg');
-}
-
-.window-handle .unmaximize {
-  background: center / 20px no-repeat url('./assets/unmaximize.svg');
-}
-
-.window-handle .close {
-  background: center / 20px no-repeat url('./assets/close.svg');
-}
-
-.window-handle .close:hover {
-  background-color: #e53935 !important;
-  background-image: url('./assets/close-hover.svg') !important;
-}
 </style>
