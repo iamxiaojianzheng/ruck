@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, toRefs } from 'vue';
+import { toRefs } from 'vue';
 
 const process = window.require('process');
 const remote = window.require('@electron/remote');

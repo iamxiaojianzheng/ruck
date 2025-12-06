@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, ref } from 'vue';
+import { ref } from 'vue';
 import { ipcRenderer } from 'electron';
 import PluginMenu from './PluginMenu.vue';
 import type { Ref } from 'vue';

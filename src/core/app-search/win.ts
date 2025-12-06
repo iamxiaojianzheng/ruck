@@ -96,9 +96,6 @@ async function fileDisplay(filePath: string, fileLists: any[]) {
 
 export default async () => {
   const fileLists: any[] = [];
-  await Promise.all([
-    fileDisplay(filePath, fileLists),
-    fileDisplay(startMenu, fileLists)
-  ]);
+  await Promise.all([fileDisplay(filePath, fileLists), fileDisplay(startMenu, fileLists)]);
   return fileLists;
 };

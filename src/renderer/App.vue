@@ -191,7 +191,7 @@ const choosePlugin = (plugin: any) => {
   // Auto detach if enabled
   const currentConfig = localConfig.getConfig() as any;
   if (currentConfig.pluginSettings?.[currentChoose.name]?.autoDetach) {
-     ipcRenderer.send('msg-trigger', {
+    ipcRenderer.send('msg-trigger', {
       type: 'detachPlugin',
     });
   }
