@@ -83,7 +83,8 @@ class AdapterHandler {
     }
     this.baseDir = options.baseDir;
 
-    let register = options.registry || 'https://registry.npmmirror.com';
+    const defaultRegistry = 'https://registry.npmmirror.com';
+    let register = options.registry || defaultRegistry;
 
     try {
       if (ipcRenderer) {
@@ -92,14 +93,16 @@ class AdapterHandler {
           data: { id: 'rubick-localhost-config' },
         });
         if (dbdata && dbdata.data && dbdata.data.register) {
-          register = dbdata.data.register;
+          register = dbdata.data.register || defaultRegistry;
         }
       }
     } catch (e) {
       // 忽略错误，使用默认源
       console.error('获取数据库配置失败:', e);
     }
-    this.registry = register || 'https://registry.npmmirror.com/';
+
+    // 确保 registry 始终以斜杠结尾，避免 URL 拼接错误
+    this.registry = register.endsWith('/') ? register : register + '/';
   }
 
   /**
@@ -115,6 +118,7 @@ class AdapterHandler {
         return;
       }
 
+      // registry 已确保以斜杠结尾，直接拼接即可
       const registryUrl = `${this.registry}${name}`;
 
       // 获取当前安装的版本

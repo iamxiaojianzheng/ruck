@@ -155,7 +155,9 @@ const optionsManager = ({ searchValue, appList, openPlugin, currentPlugin }) => 
             icon: plugin.icon,
             desc: plugin.desc,
             match: plugin.match,
-            click: plugin.click,
+            click: () => {
+              openPlugin(plugin);
+            },
             keyWords: plugin.keyWords,
           };
         }),
