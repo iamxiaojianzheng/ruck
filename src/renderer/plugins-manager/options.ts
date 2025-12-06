@@ -186,7 +186,7 @@ const optionsManager = ({ searchValue, appList, openPlugin, currentPlugin }) => 
     100,
     {
       leading: true, // 立即执行
-      trailing: false, // 延迟结束时不执行
+      trailing: true, // 延迟结束时执行
     }
   );
 
