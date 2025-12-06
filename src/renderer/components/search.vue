@@ -43,8 +43,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { ipcRenderer } from 'electron';
-import PluginMenu from './PluginMenu.vue';
-import type { Ref } from 'vue';
+import type { Ref, PropType } from 'vue';
+import type { RuntimePlugin, FileInfo, AppConfig } from '@/types';
 
 import localConfig from '../confOp';
 
@@ -67,10 +67,13 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  currentPlugin: {},
+  currentPlugin: {
+    type: Object as PropType<Partial<RuntimePlugin>>,
+    default: () => ({}),
+  },
   pluginLoading: Boolean,
   clipboardFile: {
-    type: Array,
+    type: Array as PropType<FileInfo[]>,
     default: () => [],
   },
 });
@@ -82,9 +85,10 @@ const clickLogo = () => {
   }
 };
 
-const changeValue = (e) => {
+const changeValue = (e: Event) => {
   // if (props.currentPlugin.name === 'rubick-system-feature') return;
-  targetSearch({ value: e.target.value });
+  const target = e.target as HTMLInputElement;
+  targetSearch({ value: target.value });
   emit('onSearch', e);
 };
 
@@ -100,7 +104,7 @@ const emit = defineEmits([
   'clearClipbord',
 ]);
 
-const keydownEvent = (e, key: string) => {
+const keydownEvent = (e: KeyboardEvent, key: string) => {
   // key !== 'space' && e.preventDefault();
   const { ctrlKey, shiftKey, altKey, metaKey } = e;
   const modifiers: Array<string> = [];
@@ -115,7 +119,7 @@ const keydownEvent = (e, key: string) => {
       modifiers,
     },
   });
-  const runPluginDisable = (e.target.value === '' && !props.pluginHistory.length) || props.currentPlugin.name;
+  const runPluginDisable = ((e.target as HTMLInputElement).value === '' && !props.pluginHistory.length) || props.currentPlugin.name;
   switch (key) {
     case 'up':
       emit('changeCurrent', -1);
@@ -156,10 +160,10 @@ ipcRenderer.on('escape-key-pressed', () => {
   }
 });
 
-const checkNeedInit = (e) => {
+const checkNeedInit = (e: KeyboardEvent) => {
   const { ctrlKey, metaKey } = e;
 
-  if (e.target.value === '' && e.keyCode === 8) {
+  if ((e.target as HTMLInputElement).value === '' && e.keyCode === 8) {
     closeTag();
   }
   // 手动粘贴
@@ -168,7 +172,7 @@ const checkNeedInit = (e) => {
   }
 };
 
-const handleKeydown = (e) => {
+const handleKeydown = (e: KeyboardEvent) => {
   checkNeedInit(e);
 
   let key = '';
@@ -183,7 +187,7 @@ const handleKeydown = (e) => {
   }
 };
 
-const targetSearch = ({ value }) => {
+const targetSearch = ({ value }: { value: string }) => {
   if (props.currentPlugin.name) {
     return ipcRenderer.sendSync('msg-trigger', {
       type: 'sendSubInputChangeEvent',
@@ -200,7 +204,7 @@ const closeTag = () => {
   });
 };
 
-const updateConfig = (cfg: any) => {
+const updateConfig = (cfg: AppConfig) => {
   localConfig.setConfig(cfg);
   config.value = cfg;
 };

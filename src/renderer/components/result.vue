@@ -39,7 +39,9 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, toRaw, defineProps, defineEmits } from 'vue';
+import { reactive, ref, toRaw } from 'vue';
+import type { PropType } from 'vue';
+import type { RuntimePlugin, PluginInfo, FileInfo, PluginOption, AppConfig } from '@/types';
 import localConfig from '../confOp';
 
 const path = window.require('path');
@@ -47,7 +49,7 @@ const remote = window.require('@electron/remote');
 
 declare const __static: string;
 
-const config = ref(localConfig.getConfig());
+const config = ref<AppConfig>(localConfig.getConfig());
 
 const props = defineProps({
   searchValue: {
@@ -55,27 +57,30 @@ const props = defineProps({
     default: '',
   },
   options: {
-    type: Array,
+    type: Array as PropType<PluginOption[]>,
     default: (() => [])(),
   },
   currentSelect: {
     type: Number,
     default: 0,
   },
-  currentPlugin: {},
+  currentPlugin: {
+    type: Object as PropType<Partial<RuntimePlugin>>,
+    default: () => ({}),
+  },
   pluginHistory: {
-    type: Array,
+    type: Array as PropType<Array<PluginInfo & { cmd?: string; _name?: string }>>,
     default: () => [],
   },
   clipboardFile: {
-    type: Array,
+    type: Array as PropType<FileInfo[]>,
     default: () => [],
   },
 });
 
 const emit = defineEmits(['choosePlugin', 'setPluginHistory']);
 
-const renderTitle = (title, match) => {
+const renderTitle = (title: string, match: number[]) => {
   if (typeof title !== 'string') return;
   if (!props.searchValue || !match) return title;
   const result = title.substring(match[0], match[1] + 1);
@@ -92,7 +97,7 @@ const renderDesc = (desc = '') => {
   return desc;
 };
 
-const sort = (options) => {
+const sort = (options: PluginOption[]) => {
   for (let i = 0; i < options.length; i++) {
     for (let j = i + 1; j < options.length; j++) {
       if (options[j].zIndex > options[i].zIndex) {
@@ -105,16 +110,16 @@ const sort = (options) => {
   return options.slice(0, 20);
 };
 
-const openPlugin = (item) => {
+const openPlugin = (item: PluginInfo) => {
   emit('choosePlugin', item);
 };
 
 const menuState: any = reactive({
   plugin: null,
 });
-let mainMenus;
+let mainMenus: Electron.Menu;
 
-const openMenu = (e, item) => {
+const openMenu = (e: MouseEvent, item: PluginInfo) => {
   const pinToMain = mainMenus.getMenuItemById('pinToMain');
   const unpinFromMain = mainMenus.getMenuItemById('unpinFromMain');
   pinToMain.visible = !item.pin;
@@ -178,6 +183,7 @@ initMainCmdMenus();
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 1;
+  line-clamp: 1;
   -webkit-box-orient: vertical;
 }
 

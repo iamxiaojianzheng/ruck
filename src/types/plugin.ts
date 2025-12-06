@@ -6,6 +6,8 @@
 export interface PluginInfo {
   /** 插件类型 */
   type?: 'adapter' | 'ui';
+  /** 插件应用类型 */
+  pluginType?: 'ui' | 'system' | 'app';
   /** 插件唯一标识 */
   name: string;
   /** 插件显示名称 */
@@ -69,9 +71,11 @@ export interface FileInfo {
   /** 是否为目录 */
   isDirectory: boolean;
   /** 文件名 */
-  name: string;
+  name?: string;
   /** 文件绝对路径 */
-  path: string;
+  path: string | null;
+  /** 图片数据的 Base64 编码 */
+  dataUrl?: string;
 }
 
 /** 插件上下文 */
@@ -82,10 +86,10 @@ export interface PluginContext {
   type: 'text' | 'img' | 'files' | 'regex' | 'over' | 'window';
   /** 载荷数据 */
   payload:
-    | string // text/regex/over
-    | string // img (Base64)
-    | FileInfo[] // files
-    | Record<string, any>; // window
+  | string // text/regex/over
+  | string // img (Base64)
+  | FileInfo[] // files
+  | Record<string, any>; // window
 }
 
 /** 插件运行状态 */
@@ -111,4 +115,22 @@ export interface PluginOption {
   click: () => void;
   /** logo路径 */
   logoPath?: string;
+}
+
+/** 运行时插件信息（包含运行上下文） */
+export interface RuntimePlugin extends PluginInfo {
+  /** 当前触发的命令文本 */
+  cmd: string;
+  /** 当前触发的功能 */
+  feature: Feature;
+  /** 插件页面路径 */
+  indexPath: string;
+  /** 扩展数据（payload 等） */
+  ext?: any;
+  /** 模板路径 */
+  tplPath?: string;
+  /** 点击回调 */
+  click?: () => void;
+  /** 动作（APP类型） */
+  action?: string;
 }

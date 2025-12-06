@@ -13,13 +13,13 @@ import { rebuildPluginIndex } from './search/plugin-index';
 import { exec } from 'child_process';
 import { PluginHandler } from '@/core';
 import { PLUGIN_INSTALL_DIR as baseDir, PLUGIN_HISTORY } from '@/renderer/constants/renderer';
-import type { PluginInfo } from '@/types';
+import type { PluginInfo, RuntimePlugin, PluginOption } from '@/types';
 
 interface PluginManagerState {
   appList: any[];
   plugins: PluginInfo[];
   localPlugins: PluginInfo[];
-  currentPlugin: Partial<PluginInfo>;
+  currentPlugin: Partial<RuntimePlugin>;
   pluginLoading: boolean;
   pluginHistory: PluginInfo[];
 }
@@ -100,7 +100,7 @@ const createPluginManager = () => {
     appList.value.push(plugin);
   };
 
-  const loadPlugin = async (plugin) => {
+  const loadPlugin = async (plugin: Partial<RuntimePlugin>) => {
     setSearchValue('');
     ipcRenderer.send('msg-trigger', {
       type: 'setExpendHeight',
@@ -114,7 +114,7 @@ const createPluginManager = () => {
     state.pluginLoading = false;
   };
 
-  const openPlugin = async (plugin, option) => {
+  const openPlugin = async (plugin: Partial<RuntimePlugin>, option?: PluginOption) => {
     ipcRenderer.send('msg-trigger', {
       type: 'removePlugin',
     });
@@ -132,8 +132,8 @@ const createPluginManager = () => {
         JSON.stringify({
           ...plugin,
           ext: plugin.ext || {
-            code: plugin.feature.code,
-            type: plugin.cmd.type || 'text',
+            code: plugin.feature?.code,
+            type: (plugin.cmd as any)?.type || 'text',
             payload: null,
           },
         })

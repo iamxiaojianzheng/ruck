@@ -10,17 +10,19 @@
 import { toRefs } from 'vue';
 import { ipcRenderer } from 'electron';
 import { MoreOutlined } from '@ant-design/icons-vue';
+import type { PropType } from 'vue';
+import type { AppConfig, RuntimePlugin } from '@/types';
 
 const remote = window.require('@electron/remote');
 const { Menu } = remote;
 
 const props = defineProps({
   config: {
-    type: Object,
+    type: Object as PropType<AppConfig>,
     required: true,
   },
   currentPlugin: {
-    type: Object,
+    type: Object as PropType<Partial<RuntimePlugin>>,
     default: () => ({}),
   },
   showDetachOption: {

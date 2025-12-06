@@ -10,6 +10,8 @@ export interface AppConfig {
   global: GlobalConfig;
   /** 本地配置 */
   local: LocalConfig;
+  /** 插件自定义配置 */
+  pluginSettings?: Record<string, any>;
 }
 
 /** 性能配置 */
@@ -22,6 +24,8 @@ export interface PerfConfig {
     hideOnBlur: boolean;
     /** 是否启用空格触发 */
     space: boolean;
+    /** 语言设置 */
+    lang?: string;
   };
   /** 开发者配置 */
   dev: {
