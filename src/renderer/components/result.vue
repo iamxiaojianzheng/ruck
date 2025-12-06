@@ -39,7 +39,7 @@
 </template>
 
 <script lang="ts" setup>
-import { defineEmits, defineProps, reactive, ref, toRaw, watch } from 'vue';
+import { reactive, ref, toRaw, watch } from 'vue';
 import localConfig from '../confOp';
 
 const path = window.require('path');
@@ -63,8 +63,14 @@ const props = defineProps({
     default: 0,
   },
   currentPlugin: {},
-  pluginHistory: (() => [])(),
-  clipboardFile: (() => [])(),
+  pluginHistory: {
+    type: Array,
+    default: () => [],
+  },
+  clipboardFile: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(['choosePlugin', 'setPluginHistory']);
