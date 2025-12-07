@@ -13,6 +13,7 @@ import mainInstance from '../index';
 import { runner, detach } from '../browsers';
 import DBInstance from './db';
 import getWinPosition from './getWinPosition';
+import { registerSeparateShortcut, unregisterSeparateShortcut } from './registerHotKey';
 // import { copyFilesToWindowsClipboard } from './windowsClipboard';
 
 /**
@@ -152,11 +153,17 @@ class API extends DBInstance {
     if (!view.inited) {
       view?.webContents?.on('before-input-event', (event, input) => this.__EscapeKeyDown(event, input, window));
     }
+
+    // 插件打开后，注册分离窗口快捷键
+    registerSeparateShortcut();
   }
 
   public removePlugin(e: any, window: BrowserWindow) {
     runnerInstance.removeView(window);
     this.currentPlugin = null;
+
+    // 插件关闭后，取消注册分离窗口快捷键
+    unregisterSeparateShortcut();
   }
 
   /**
@@ -369,6 +376,9 @@ class API extends DBInstance {
       window.webContents.executeJavaScript(`window.initRubick()`);
       window.setSize(window.getSize()[0], 60);
       this.currentPlugin = null;
+
+      // 插件分离后，主窗口已无插件，取消注册分离窗口快捷键
+      unregisterSeparateShortcut();
     });
   }
 
