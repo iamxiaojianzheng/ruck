@@ -67,17 +67,15 @@ const isAutoDetach = () => {
   return config.value.pluginSettings?.[pluginName]?.autoDetach || false;
 };
 
-const changeAutoDetach = () => {
+const changeAutoDetach = async () => {
   const pluginName = currentPlugin.value.name;
   const currentValue = config.value.pluginSettings?.[pluginName]?.autoDetach || false;
   
-  const { ipcRenderer } = window.require('electron');
-  const updatedConfig = ipcRenderer.sendSync('detach:service', {
-    type: 'updatePluginSetting',
+  const updatedConfig = await window.detachAPI.updatePluginSetting(
     pluginName,
-    key: 'autoDetach',
-    value: !currentValue,
-  });
+    'autoDetach',
+    !currentValue
+  );
   
   emit('updateConfig', updatedConfig);
 };

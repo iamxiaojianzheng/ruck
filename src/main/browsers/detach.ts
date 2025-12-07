@@ -5,9 +5,9 @@ import path from 'path';
 import fs from 'fs';
 import { WINDOW_CONFIG } from '@/common/constants';
 import { PLUGIN_INSTALL_ROOT_DIR } from '@/common/constants/main';
+import { setDetachWindow } from '@/main/ipc/handlers/detach-handlers';
 
 export default () => {
-  const DETACH_CHANNEL = 'detach:service';
   let win: Electron.BrowserWindow;
   let view: any;
 
@@ -35,12 +35,7 @@ export default () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     require('@electron/remote/main').enable(win.webContents);
 
-    // 在这里注册 detach:service 监听器，确保在 ready-to-show 之前就绪
-    ipcMain.on(DETACH_CHANNEL, async (event, arg: { type: string;[key: string]: any }) => {
-      console.log('detach channel', arg);
-      const data = await operation[arg.type](arg);
-      event.returnValue = data;
-    });
+    // 旧的 detach:service 监听器已移除，现在使用新的 IPC handlers
   };
 
   const createWindow = async (pluginInfo, bounds: Electron.Rectangle) => {
@@ -57,6 +52,7 @@ export default () => {
       enableLargerThanScreen: true,
       backgroundColor: nativeTheme.shouldUseDarkColors ? '#1c1c28' : '#fff',
       webPreferences: {
+        preload: path.join(__static, './detach/preload.js'),
         webSecurity: false,
         backgroundThrottling: false,
         contextIsolation: false,
@@ -75,6 +71,9 @@ export default () => {
       win.loadURL(`file://${path.join(__static, './detach/index.html')}`);
     }
 
+    // 设置窗口引用供 IPC handlers 使用
+    setDetachWindow(win);
+
     win.on('close', () => {
       console.log('detach window close');
       executeHooks('PluginOut', null);
@@ -83,7 +82,9 @@ export default () => {
     win.on('closed', () => {
       console.log('detach window closed');
       rb.removeView(appWindow);
-      ipcMain.removeAllListeners(DETACH_CHANNEL);
+      // 清理窗口引用
+      setDetachWindow(null);
+      // 不再需要移除 DETACH_CHANNEL 监听器，因为已经使用新的 IPC handlers
       win = null;
     });
 

@@ -43,17 +43,17 @@ const storeInfo = localStorage.getItem('rubick-system-detach') || '{}';
 const pluginInfo = ref({});
 const config = ref({});
 
-window.initDetach = (info) => {
+window.initDetach = async (info) => {
   const { subInput } = info;
   pluginInfo.value = info;
   pluginInfo.value.pin = false;
   showInput.value = subInput && (!!subInput.value || !!subInput.placeholder);
   localStorage.setItem('rubick-system-detach', JSON.stringify(info));
-  isDev.value = ipcRenderer.sendSync('msg-trigger', { type: 'isDev' }) === true;
+  isDev.value = await window.detachAPI.isDev();
 
-  // Fetch config from detach:service
+  // Fetch config from detach API
   try {
-    config.value = ipcRenderer.sendSync('detach:service', { type: 'getConfig' }) || {};
+    config.value = await window.detachAPI.getConfig() || {};
   } catch (e) {
     console.error(e);
   }
@@ -71,25 +71,20 @@ try {
 }
 
 const changeValue = throttle((e) => {
-  ipcRenderer.send('msg-trigger', {
-    type: 'detachInputChange',
-    data: {
-      text: e.target.value,
-    },
-  });
+  window.detachAPI.detachInputChange(e.target.value);
 }, 500);
 
 const openDevTool = () => {
-  ipcRenderer.send('msg-trigger', { type: 'openPluginDevTools' });
+  window.detachAPI.openDevTools();
 };
 
 const pinWindow = () => {
   console.log('pin');
   const { pin } = pluginInfo.value;
   if (pin) {
-    ipcRenderer.send('detach:service', { type: 'unpin' });
+    window.detachAPI.unpin();
   } else {
-    ipcRenderer.send('detach:service', { type: 'pin' });
+    window.detachAPI.pin();
   }
   pluginInfo.value.pin = !pin;
 };
@@ -101,15 +96,15 @@ const updateConfig = (updatedConfig) => {
 };
 
 const minimize = () => {
-  ipcRenderer.send('detach:service', { type: 'minimize' });
+  window.detachAPI.minimize();
 };
 
 const maximize = () => {
-  ipcRenderer.send('detach:service', { type: 'maximize' });
+  window.detachAPI.maximize();
 };
 
 const close = () => {
-  ipcRenderer.send('detach:service', { type: 'close' });
+  window.detachAPI.close();
 };
 
 Object.assign(window, {
@@ -149,7 +144,7 @@ window.unmaximizeTrigger = () => {
 if (process.platform === 'darwin') {
   window.onkeydown = (e) => {
     if (e.code === 'Escape') {
-      ipcRenderer.send('detach:service', { type: 'endFullScreen' });
+      window.detachAPI.endFullScreen();
       return;
     }
     if (e.metaKey && (e.code === 'KeyW' || e.code === 'KeyQ')) {

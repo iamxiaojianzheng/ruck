@@ -12,6 +12,7 @@ import * as clipboardHandlers from './handlers/clipboard-handlers';
 import * as pluginHandlers from './handlers/plugin-handlers';
 import * as systemHandlers from './handlers/system-handlers';
 import * as otherHandlers from './handlers/other-handlers';
+import * as detachHandlers from './handlers/detach-handlers';
 
 /**
  * 注册所有 IPC 处理器
@@ -85,6 +86,17 @@ export function registerAllHandlers(): void {
     // 本地启动插件
     ipcRegistry.register('localStart:add', otherHandlers.addLocalStartPlugin);
     ipcRegistry.register('localStart:remove', otherHandlers.removeLocalStartPlugin);
+
+    // Detach 窗口操作
+    ipcRegistry.register('detach:getConfig', detachHandlers.getConfig);
+    ipcRegistry.register('detach:updatePluginSetting', detachHandlers.updatePluginSetting);
+    ipcRegistry.register('detach:minimize', detachHandlers.minimize);
+    ipcRegistry.register('detach:maximize', detachHandlers.maximize);
+    ipcRegistry.register('detach:close', detachHandlers.close);
+    ipcRegistry.register('detach:pin', detachHandlers.pin);
+    ipcRegistry.register('detach:unpin', detachHandlers.unpin);
+    ipcRegistry.register('detach:endFullScreen', detachHandlers.endFullScreen);
+    ipcRegistry.register('detach:inputChange', detachHandlers.inputChange);
 
     // 渲染进程就绪
     ipcRegistry.register('renderer:ready', otherHandlers.rendererReady);

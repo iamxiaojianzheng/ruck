@@ -71,6 +71,16 @@ export type IPCChannel =
     // 本地启动插件
     | 'localStart:add'
     | 'localStart:remove'
+    // Detach 窗口操作
+    | 'detach:getConfig'
+    | 'detach:updatePluginSetting'
+    | 'detach:minimize'
+    | 'detach:maximize'
+    | 'detach:close'
+    | 'detach:pin'
+    | 'detach:unpin'
+    | 'detach:endFullScreen'
+    | 'detach:inputChange'
     // 渲染进程就绪通知
     | 'renderer:ready';
 
@@ -205,6 +215,20 @@ export interface IPCChannelMap {
     // 本地启动插件
     'localStart:add': { request: { plugin: any }; response: void };
     'localStart:remove': { request: { plugin: any }; response: void };
+
+    // Detach 窗口操作
+    'detach:getConfig': { request: void; response: any };
+    'detach:updatePluginSetting': {
+        request: { pluginName: string; key: string; value: any };
+        response: any
+    };
+    'detach:minimize': { request: void; response: void };
+    'detach:maximize': { request: void; response: void };
+    'detach:close': { request: void; response: void };
+    'detach:pin': { request: void; response: void };
+    'detach:unpin': { request: void; response: void };
+    'detach:endFullScreen': { request: void; response: void };
+    'detach:inputChange': { request: { text: string }; response: void };
 
     // 渲染进程就绪
     'renderer:ready': { request: void; response: { success: boolean } };
