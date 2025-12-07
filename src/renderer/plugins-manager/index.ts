@@ -144,9 +144,12 @@ const createPluginManager = () => {
       const localConfig = await import('../confOp');
       const currentConfig = localConfig.default.getConfig() as any;
       if (currentConfig?.pluginSettings?.[plugin.name]?.autoDetach) {
-        ipcRenderer.send('msg-trigger', {
-          type: 'detachPlugin',
-        });
+        // 等待插件加载完成后再分离，确保 view 的 dom-ready 已触发和 bounds 已设置
+        setTimeout(() => {
+          ipcRenderer.send('msg-trigger', {
+            type: 'detachPlugin',
+          });
+        }, 500);
       }
     }
 

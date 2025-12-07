@@ -191,9 +191,12 @@ const choosePlugin = (plugin: any) => {
   // Auto detach if enabled
   const currentConfig = localConfig.getConfig() as any;
   if (currentConfig.pluginSettings?.[currentChoose.name]?.autoDetach) {
-    ipcRenderer.send('msg-trigger', {
-      type: 'detachPlugin',
-    });
+    // 等待插件加载完成后再分离，确保 view 的 dom-ready 已触发和 bounds 已设置
+    setTimeout(() => {
+      ipcRenderer.send('msg-trigger', {
+        type: 'detachPlugin',
+      });
+    }, 500);
   }
 };
 
