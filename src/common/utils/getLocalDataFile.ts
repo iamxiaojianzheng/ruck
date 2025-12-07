@@ -2,9 +2,9 @@ import path from 'path';
 import fs from 'fs';
 
 export default (): string => {
-  let localDataFile: any = process.env.HOME;
+  const localDataFile = process.env.HOME || process.env.LOCALAPPDATA;
   if (!localDataFile) {
-    localDataFile = process.env.LOCALAPPDATA;
+    throw new Error('Home directory not found');
   }
   const rubickPath = path.join(localDataFile, 'rubick');
   if (!fs.existsSync(rubickPath)) {

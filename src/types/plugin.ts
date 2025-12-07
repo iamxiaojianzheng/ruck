@@ -134,3 +134,10 @@ export interface RuntimePlugin extends PluginInfo {
   /** 动作（APP类型） */
   action?: string;
 }
+
+/** 本地插件信息（用于插件管理） */
+export interface LocalPlugin extends Partial<PluginInfo> {
+  isDev?: boolean;
+  logoPath?: string;
+  [key: string]: any;
+}

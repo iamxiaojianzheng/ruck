@@ -4,18 +4,19 @@ import request from 'request';
 import { PluginHandler } from '@/core';
 import { PLUGIN_INSTALL_DIR as baseDir, PLUGIN_INSTALL_ROOT_DIR } from '@/common/constants/main';
 import API from '@/main/common/api';
+import { LocalPlugin } from '@/types';
 
 const configPath = path.join(baseDir, './rubick-local-plugin.json');
-const checkDevPlugin = (plugin) => {
+const checkDevPlugin = (plugin: LocalPlugin) => {
   const { name: pluginName, isDev } = plugin;
-  const pluginPath = path.resolve(PLUGIN_INSTALL_ROOT_DIR, pluginName);
+  const pluginPath = path.resolve(PLUGIN_INSTALL_ROOT_DIR, pluginName || '');
   console.log('pluginPath:', pluginPath);
   if (isDev && !fs.existsSync(pluginPath)) {
     throw new Error(`错误: 插件【${pluginName}】所在路径为空`);
   }
 };
 
-function downloadImage(url, savePath) {
+function downloadImage(url: string, savePath: string) {
   return new Promise((resolve, reject) => {
     const writeStream = fs.createWriteStream(savePath);
 
@@ -33,8 +34,8 @@ function downloadImage(url, savePath) {
   });
 }
 
-let registry;
-let pluginInstance;
+let registry: string;
+let pluginInstance: PluginHandler;
 (async () => {
   try {
     const res = await API.dbGet({
@@ -58,8 +59,10 @@ let pluginInstance;
 
 global.LOCAL_PLUGINS = {
   PLUGINS: [],
-  async downloadPlugin(plugin) {
+  async downloadPlugin(plugin: LocalPlugin) {
     const { name: pluginName, isDev } = plugin;
+
+    if (!pluginName) return;
 
     await pluginInstance.install([pluginName], { isDev });
     const pluginPath = path.resolve(PLUGIN_INSTALL_ROOT_DIR, pluginName);
@@ -72,21 +75,25 @@ global.LOCAL_PLUGINS = {
     }
 
     const logo = plugin.logo;
-    const logoPath = path.join(pluginPath, 'logo' + path.extname(logo));
-    if (/^(http|https):\/\//.test(logo)) {
-      await downloadImage(logo, logoPath);
-      if (fs.existsSync(logoPath)) {
+    if (logo) {
+      const logoPath = path.join(pluginPath, 'logo' + path.extname(logo));
+      if (/^(http|https):\/\//.test(logo)) {
+        await downloadImage(logo, logoPath);
+        if (fs.existsSync(logoPath)) {
+          plugin.logoPath = logoPath;
+        }
+      } else if (fs.existsSync(logoPath)) {
         plugin.logoPath = logoPath;
       }
-    } else if (fs.existsSync(logoPath)) {
-      plugin.logoPath = logoPath;
     }
 
     global.LOCAL_PLUGINS.addPlugin(plugin);
     return global.LOCAL_PLUGINS.PLUGINS;
   },
-  refreshPlugin(plugin) {
+  refreshPlugin(plugin: LocalPlugin) {
     const { name: pluginName } = plugin;
+    if (!pluginName) return global.LOCAL_PLUGINS.PLUGINS;
+
     // 获取 dev 插件信息
     const pluginPath = path.resolve(PLUGIN_INSTALL_ROOT_DIR, pluginName);
     const packagePath = path.join(pluginPath, './package.json');
@@ -97,7 +104,7 @@ global.LOCAL_PLUGINS = {
     // 刷新
     let currentPlugins = global.LOCAL_PLUGINS.getLocalPlugins();
 
-    currentPlugins = currentPlugins.map((p) => {
+    currentPlugins = currentPlugins.map((p: LocalPlugin) => {
       if (p.name === pluginName) {
         return plugin;
       }
@@ -120,10 +127,10 @@ global.LOCAL_PLUGINS = {
       return global.LOCAL_PLUGINS.PLUGINS;
     }
   },
-  addPlugin(plugin) {
+  addPlugin(plugin: LocalPlugin) {
     let has = false;
     const currentPlugins = global.LOCAL_PLUGINS.getLocalPlugins();
-    currentPlugins.some((p) => {
+    currentPlugins.some((p: LocalPlugin) => {
       has = p.name === plugin.name;
       return has;
     });
@@ -133,8 +140,8 @@ global.LOCAL_PLUGINS = {
       fs.writeFileSync(configPath, JSON.stringify(currentPlugins));
     }
   },
-  updatePlugin(plugin) {
-    global.LOCAL_PLUGINS.PLUGINS = global.LOCAL_PLUGINS.PLUGINS.map((origin) => {
+  updatePlugin(plugin: LocalPlugin) {
+    global.LOCAL_PLUGINS.PLUGINS = global.LOCAL_PLUGINS.PLUGINS.map((origin: LocalPlugin) => {
       if (origin.name === plugin.name) {
         return plugin;
       }
@@ -142,9 +149,10 @@ global.LOCAL_PLUGINS = {
     });
     fs.writeFileSync(configPath, JSON.stringify(global.LOCAL_PLUGINS.PLUGINS));
   },
-  async deletePlugin(plugin) {
+  async deletePlugin(plugin: LocalPlugin) {
+    if (!plugin.name) return;
     await pluginInstance.uninstall([plugin.name], { isDev: plugin.isDev });
-    global.LOCAL_PLUGINS.PLUGINS = global.LOCAL_PLUGINS.PLUGINS.filter((p) => plugin.name !== p.name);
+    global.LOCAL_PLUGINS.PLUGINS = global.LOCAL_PLUGINS.PLUGINS.filter((p: LocalPlugin) => plugin.name !== p.name);
     fs.writeFileSync(configPath, JSON.stringify(global.LOCAL_PLUGINS.PLUGINS));
     return global.LOCAL_PLUGINS.PLUGINS;
   },

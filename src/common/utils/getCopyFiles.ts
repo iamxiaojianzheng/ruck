@@ -3,13 +3,13 @@ import fs from 'fs';
 import path from 'path';
 import ofs from 'original-fs';
 
-export default function getCopyFiles(): Array<any> | null {
+export default function getCopyFiles(): Array<FileInfo> | null {
   const filePaths = clipboardFiles.readFiles();
   if (!Array.isArray(filePaths)) return null;
-  const copyFiles: any = filePaths
-    .map((p) => {
+  const copyFiles: Array<FileInfo> = filePaths
+    .map((p: string) => {
       if (!fs.existsSync(p)) return false;
-      let fileInfo;
+      let fileInfo: fs.Stats;
       try {
         fileInfo = ofs.lstatSync(p);
       } catch (e) {
@@ -22,6 +22,6 @@ export default function getCopyFiles(): Array<any> | null {
         path: p,
       };
     })
-    .filter(Boolean);
+    .filter((item): item is FileInfo => item !== false);
   return copyFiles.length ? copyFiles : null;
 }

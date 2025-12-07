@@ -1,6 +1,7 @@
 import { WINDOW_HEIGHT_CONFIG } from '../constants/window';
+import { PluginOption, PluginInfo } from '@/types';
 
-export default (searchList: Array<any>, historyList: any[]): number => {
+export default (searchList: Array<PluginOption> | undefined | null, historyList: Array<PluginInfo>): number => {
   // 计算历史记录需要的高度
   let historyHeight = 0;
   if (historyList.length > 0) {
