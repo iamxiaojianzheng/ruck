@@ -14,6 +14,7 @@ import '../common/utils/localPlugin';
 
 import checkVersion from './common/versionHandler';
 import registerSystemPlugin from './common/registerSystemPlugin';
+import { registerAllHandlers } from './ipc/register-handlers';
 
 /**
  * 应用主类
@@ -96,6 +97,9 @@ class App {
    */
   onReady() {
     const readyFunction = async () => {
+      // 注册类型安全的 IPC 处理器
+      registerAllHandlers();
+
       // 检查版本更新
       checkVersion();
 

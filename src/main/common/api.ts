@@ -40,13 +40,96 @@ const detachInstance = detach();
 
 class API extends DBInstance {
   init(mainWindow: BrowserWindow) {
-    // 响应 preload.js 事件
+    // 响应 preload.js 事件（保持向后兼容）
     ipcMain.on('msg-trigger', async (event, arg) => {
       const window = arg.winId ? BrowserWindow.fromId(arg.winId) : mainWindow;
-      const data = await this[arg.type](arg, window, event);
-      event.returnValue = data;
-      // event.sender.send(`msg-back-${arg.type}`, data);
+      try {
+        // 类型安全的方法调用映射
+        const methodMap: Record<string, (arg: any, window: BrowserWindow, event: any) => any> = {
+          // 窗口操作
+          hideWindow: () => this.hideWindow(),
+          hideMainWindow: () => this.hideMainWindow(arg, window),
+          showMainWindow: () => this.showMainWindow(arg, window),
+          setExpendHeight: () => this.setExpendHeight(arg, window, event),
+          windowMoving: () => this.windowMoving(arg, window, event),
+
+          // 插件操作
+          loadPlugin: () => this.loadPlugin(arg, window),
+          openPlugin: () => this.openPlugin(arg, window),
+          removePlugin: () => this.removePlugin(event, window),
+          detachPlugin: () => this.detachPlugin(event, window),
+          openPluginDevTools: () => this.openPluginDevTools(),
+
+          // 数据库操作
+          dbPut: () => this.dbPut(arg),
+          dbGet: () => this.dbGet(arg),
+          dbRemove: () => this.dbRemove(arg),
+          dbBulkDocs: () => this.dbBulkDocs(arg),
+          dbAllDocs: () => this.dbAllDocs(arg),
+          dbDump: () => this.dbDump(arg),
+          dbImport: () => this.dbImport(arg),
+          dbPostAttachment: () => this.dbPostAttachment(arg),
+          dbGetAttachment: () => this.dbGetAttachment(arg),
+          dbGetAttachmentType: () => this.dbGetAttachmentType(arg),
+
+          // 对话框
+          showOpenDialog: () => this.showOpenDialog(arg, window),
+          showSaveDialog: () => this.showSaveDialog(arg, window),
+
+          // 剪贴板
+          copyImage: () => this.copyImage(arg),
+          copyText: () => this.copyText(arg),
+          copyFile: () => this.copyFile(arg),
+          getCopyFiles: () => this.getCopyFiles(),
+
+          // 通知
+          showNotification: () => this.showNotification(arg),
+
+          // 子输入框
+          setSubInput: () => this.setSubInput(arg, window, event),
+          removeSubInput: () => this.removeSubInput(arg, window, event),
+          setSubInputValue: () => this.setSubInputValue(arg, window, event),
+          subInputReadonly: () => this.subInputReadonly(arg, window, event),
+          subInputBlur: () => this.subInputBlur(),
+          sendSubInputChangeEvent: () => this.sendSubInputChangeEvent(arg),
+
+          // 系统操作
+          getPath: () => this.getPath(arg),
+          shellShowItemInFolder: () => this.shellShowItemInFolder(arg),
+          shellBeep: () => this.shellBeep(),
+          getFileIcon: () => this.getFileIcon(arg),
+          simulateKeyboardTap: () => this.simulateKeyboardTap(arg),
+          screenCapture: () => this.screenCapture(arg, window),
+          getLocalId: () => this.getLocalId(),
+          isDev: () => this.isDev(),
+
+          // 功能管理
+          getFeatures: () => this.getFeatures(),
+          setFeature: () => this.setFeature(arg, window),
+          removeFeature: () => this.removeFeature(arg, window),
+
+          // 本地启动插件
+          addLocalStartPlugin: () => this.addLocalStartPlugin(arg, window),
+          removeLocalStartPlugin: () => this.removeLocalStartPlugin(arg, window),
+
+          // 渲染进程就绪
+          rendererReady: () => this.rendererReady(),
+        };
+
+        const handler = methodMap[arg.type];
+        if (handler) {
+          const data = await handler(arg, window, event);
+          event.returnValue = data;
+        } else {
+          console.warn(`Unknown IPC message type: ${arg.type}`);
+          event.returnValue = null;
+        }
+      } catch (error) {
+        console.error(`Error handling IPC message "${arg.type}":`, error);
+        event.returnValue = null;
+      }
     });
+
     // 按 ESC 退出插件
     mainWindow.webContents.on('before-input-event', (event, input) => this.__EscapeKeyDown(event, input, mainWindow));
     // 设置主窗口的 show/hide 事件监听
