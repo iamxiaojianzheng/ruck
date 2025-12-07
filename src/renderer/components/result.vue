@@ -42,6 +42,7 @@
 import { reactive, ref, toRaw } from 'vue';
 import type { PropType } from 'vue';
 import type { RuntimePlugin, PluginInfo, FileInfo, PluginOption, AppConfig } from '@/types';
+import type { Menu } from 'electron';
 import localConfig from '../confOp';
 
 const path = window.require('path');
@@ -117,7 +118,7 @@ const openPlugin = (item: PluginInfo) => {
 const menuState: any = reactive({
   plugin: null,
 });
-let mainMenus: Electron.Menu;
+let mainMenus: Menu;
 
 const openMenu = (e: MouseEvent, item: PluginInfo) => {
   const pinToMain = mainMenus.getMenuItemById('pinToMain');
