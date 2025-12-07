@@ -45,7 +45,7 @@ import { ref } from 'vue';
 import { ipcRenderer } from 'electron';
 import type { Ref, PropType } from 'vue';
 import type { RuntimePlugin, FileInfo, AppConfig } from '@/types';
-
+import PluginMenu from './PluginMenu.vue';
 import localConfig from '../confOp';
 
 const config: Ref = ref(localConfig.getConfig());
@@ -242,7 +242,7 @@ const handleBlur = () => {
 };
 
 window.rubick.hooks.onShow = () => {
-  console.log('onShow');
+  // console.log('onShow');
   (mainInput.value as unknown as HTMLDivElement).focus();
 };
 

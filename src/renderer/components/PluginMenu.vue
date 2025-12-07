@@ -12,6 +12,7 @@ import { ipcRenderer } from 'electron';
 import { MoreOutlined } from '@ant-design/icons-vue';
 import type { PropType } from 'vue';
 import type { AppConfig, RuntimePlugin } from '@/types';
+import localConfig from '../confOp';
 
 const remote = window.require('@electron/remote');
 const { Menu } = remote;
@@ -74,6 +75,15 @@ const changeLang = (lang: string) => {
 };
 
 const showMenu = () => {
+  // 刷新配置，确保获取最新值（可能在 detach 窗口中被修改）
+  const latestConfig = localConfig.getConfig();
+  if (latestConfig) {
+    emit('updateConfig', latestConfig);
+  }
+  
+  // 使用最新获取的配置来构建菜单
+  const currentConfig = latestConfig || config.value;
+  
   let pluginMenu: any = [];
 
   if (isDetach.value) {
@@ -83,13 +93,13 @@ const showMenu = () => {
     });
   } else {
     pluginMenu.push({
-      label: config.value.perf.common.hideOnBlur ? '钉住' : '自动隐藏',
+      label: currentConfig.perf.common.hideOnBlur ? '钉住' : '自动隐藏',
       click: changeHideOnBlur,
     });
   }
 
   pluginMenu.push({
-    label: config.value.perf.common.lang === 'zh-CN' ? '切换语言' : 'Change Language',
+    label: currentConfig.perf.common.lang === 'zh-CN' ? '切换语言' : 'Change Language',
     submenu: [
       {
         label: '简体中文',
@@ -114,7 +124,7 @@ const showMenu = () => {
           {
             label: '自动分离为独立窗口',
             type: 'checkbox',
-            checked: isAutoDetach(),
+            checked: currentConfig.pluginSettings?.[currentPlugin.value.name]?.autoDetach || false,
             click: changeAutoDetach,
           },
         ],

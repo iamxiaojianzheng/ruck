@@ -50,7 +50,15 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['updateConfig', 'detach', 'togglePin', 'openDevTool', 'minimize', 'maximize', 'close']);
+const emit = defineEmits([
+  'updateConfig',
+  'detach',
+  'togglePin',
+  'openDevTool',
+  'minimize',
+  'maximize',
+  'close',
+]);
 
 const { config, currentPlugin, showDetachOption, isDetach, pinStatus, isDev } = toRefs(props);
 
@@ -61,15 +69,17 @@ const isAutoDetach = () => {
 
 const changeAutoDetach = () => {
   const pluginName = currentPlugin.value.name;
-  let cfg = JSON.parse(JSON.stringify(config.value));
-  if (!cfg.pluginSettings) {
-    cfg.pluginSettings = {};
-  }
-  if (!cfg.pluginSettings[pluginName]) {
-    cfg.pluginSettings[pluginName] = {};
-  }
-  cfg.pluginSettings[pluginName].autoDetach = !cfg.pluginSettings[pluginName].autoDetach;
-  emit('updateConfig', cfg);
+  const currentValue = config.value.pluginSettings?.[pluginName]?.autoDetach || false;
+  
+  const { ipcRenderer } = window.require('electron');
+  const updatedConfig = ipcRenderer.sendSync('detach:service', {
+    type: 'updatePluginSetting',
+    pluginName,
+    key: 'autoDetach',
+    value: !currentValue,
+  });
+  
+  emit('updateConfig', updatedConfig);
 };
 
 const changeHideOnBlur = () => {

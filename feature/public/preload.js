@@ -39,7 +39,6 @@ window.market = {
   dbDump(target) {
     ipcSend('dbDump', { target });
   },
-
   dbImport(target) {
     ipcSend('dbImport', { target });
   },

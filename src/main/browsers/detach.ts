@@ -34,6 +34,13 @@ export default () => {
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     require('@electron/remote/main').enable(win.webContents);
+
+    // 在这里注册 detach:service 监听器，确保在 ready-to-show 之前就绪
+    ipcMain.on(DETACH_CHANNEL, async (event, arg: { type: string;[key: string]: any }) => {
+      console.log('detach channel', arg);
+      const data = await operation[arg.type](arg);
+      event.returnValue = data;
+    });
   };
 
   const createWindow = async (pluginInfo, bounds: Electron.Rectangle) => {
@@ -94,14 +101,9 @@ export default () => {
       view.setAutoResize({ width: true, height: true });
       win.setBrowserView(view);
       view.inDetach = true;
-      win.webContents.executeJavaScript(`window.initDetach(${JSON.stringify(pluginInfo)})`);
 
-      // const id = win.webContents.id;
-      ipcMain.on(DETACH_CHANNEL, async (event, arg: { type: string }) => {
-        console.log('detach channel', win.webContents.id, arg);
-        const data = await operation[arg.type]();
-        event.returnValue = data;
-      });
+      // 调用 initDetach（监听器已在 init 函数中注册）
+      win.webContents.executeJavaScript(`window.initDetach(${JSON.stringify(pluginInfo)})`);
 
       win.show();
       win.focus();
@@ -203,6 +205,21 @@ export default () => {
     },
     endFullScreen: () => {
       win.isFullScreen() && win.setFullScreen(false);
+    },
+    getConfig: async () => {
+      return await localConfig.getConfig();
+    },
+    updatePluginSetting: async ({ pluginName, key, value }) => {
+      const config = await localConfig.getConfig();
+      if (!config.pluginSettings) {
+        config.pluginSettings = {};
+      }
+      if (!config.pluginSettings[pluginName]) {
+        config.pluginSettings[pluginName] = {};
+      }
+      config.pluginSettings[pluginName][key] = value;
+      await localConfig.setConfig(config);
+      return await localConfig.getConfig();
     },
   };
 

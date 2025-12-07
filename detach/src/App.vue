@@ -51,12 +51,9 @@ window.initDetach = (info) => {
   localStorage.setItem('rubick-system-detach', JSON.stringify(info));
   isDev.value = ipcRenderer.sendSync('msg-trigger', { type: 'isDev' }) === true;
 
-  // Fetch config
+  // Fetch config from detach:service
   try {
-    const res = ipcRenderer.sendSync('msg-trigger', { type: 'dbGet', data: { id: 'rubick-local-config' } });
-    if (res && res.data) {
-      config.value = res.data;
-    }
+    config.value = ipcRenderer.sendSync('detach:service', { type: 'getConfig' }) || {};
   } catch (e) {
     console.error(e);
   }
@@ -97,18 +94,9 @@ const pinWindow = () => {
   pluginInfo.value.pin = !pin;
 };
 
-const updateConfig = (cfg) => {
-  config.value = cfg;
-  const res = ipcRenderer.sendSync('msg-trigger', { type: 'dbGet', data: { id: 'rubick-local-config' } });
-  if (res) {
-    ipcRenderer.send('msg-trigger', {
-      type: 'dbPut',
-      data: {
-        _id: 'rubick-local-config',
-        _rev: res._rev,
-        data: cfg,
-      },
-    });
+const updateConfig = (updatedConfig) => {
+  if (updatedConfig) {
+    config.value = updatedConfig;
   }
 };
 

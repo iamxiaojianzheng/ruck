@@ -139,6 +139,15 @@ const createPluginManager = () => {
         })
       );
       window.rubick.openPlugin(newPluginInfo);
+
+      // Check auto detach setting
+      const localConfig = await import('../confOp');
+      const currentConfig = localConfig.default.getConfig() as any;
+      if (currentConfig?.pluginSettings?.[plugin.name]?.autoDetach) {
+        ipcRenderer.send('msg-trigger', {
+          type: 'detachPlugin',
+        });
+      }
     }
 
     if (plugin.pluginType === 'app') {
