@@ -63,6 +63,7 @@ export type IPCChannel =
     | 'system:screenCapture'
     | 'system:getLocalId'
     | 'system:isDev'
+    | 'system:reRegisterHotKey'
     // 功能管理
     | 'feature:get'
     | 'feature:set'
@@ -194,6 +195,7 @@ export interface IPCChannelMap {
     'system:screenCapture': { request: void; response: void };
     'system:getLocalId': { request: void; response: string };
     'system:isDev': { request: void; response: boolean };
+    'system:reRegisterHotKey': { request: void; response: void };
 
     // 功能管理
     'feature:get': { request: void; response: any[] };

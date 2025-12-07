@@ -101,3 +101,13 @@ export const showNotification: IPCHandler<'notification:show'> = (event, { body 
 
     notify.show();
 };
+
+/**
+ * 重新注册全局快捷键
+ */
+export const reRegisterHotKey: IPCHandler<'system:reRegisterHotKey'> = () => {
+    // 触发原有的 re-register 事件
+    const { ipcMain } = require('electron');
+    ipcMain.emit('re-register');
+};
+

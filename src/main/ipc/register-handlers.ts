@@ -60,6 +60,7 @@ export function registerAllHandlers(): void {
     ipcRegistry.register('system:screenCapture', systemHandlers.handleScreenCapture);
     ipcRegistry.register('system:getLocalId', systemHandlers.getLocalId);
     ipcRegistry.register('system:isDev', systemHandlers.isDev);
+    ipcRegistry.register('system:reRegisterHotKey', systemHandlers.reRegisterHotKey);
 
     // 通知
     ipcRegistry.register('notification:show', systemHandlers.showNotification);

@@ -295,7 +295,7 @@ state.common = perf.common;
 state.local = perf.local;
 state.global = defaultGlobal;
 
-const setConfig = debounce(() => {
+const setConfig = debounce(async () => {
   const { perf } = localConfig.getConfig();
   localConfig.setConfig(
     JSON.parse(
@@ -310,8 +310,8 @@ const setConfig = debounce(() => {
       })
     )
   );
-  ipcRenderer.send('re-register');
-}, 500);
+  await window.reRegisterHotKey();
+}, 100);
 
 watch(state, setConfig);
 

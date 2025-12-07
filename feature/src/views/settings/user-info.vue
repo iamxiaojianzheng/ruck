@@ -51,7 +51,6 @@ import { reactive, toRefs, watch, ref } from 'vue';
 import debounce from 'lodash.debounce';
 import localConfig from '@/confOp';
 import * as Themes from '@/assets/constans';
-const { ipcRenderer } = window.require('electron');
 
 const state = reactive({
   custom: {},
@@ -63,7 +62,7 @@ const theme = ref(perf.custom.theme);
 
 state.custom = perf.custom || {};
 
-const setConfig = debounce(() => {
+const setConfig = debounce(async () => {
   const { perf } = localConfig.getConfig();
 
   localConfig.setConfig(
@@ -76,8 +75,8 @@ const setConfig = debounce(() => {
       })
     )
   );
-  ipcRenderer.send('re-register');
-}, 500);
+  await window.reRegisterHotKey();
+}, 100);
 
 watch(state, setConfig);
 const { custom } = toRefs(state);
