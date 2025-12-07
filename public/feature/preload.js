@@ -1,20 +1,16 @@
 const remote = require('@electron/remote');
 const { ipcRenderer } = require('electron');
 
-const ipcSendSync = (type, data) => {
-  const returnValue = ipcRenderer.sendSync('msg-trigger', {
-    type,
-    data,
-  });
-  if (returnValue instanceof Error) throw returnValue;
-  return returnValue;
-};
-
-const ipcSend = (type, data) => {
-  ipcRenderer.send('msg-trigger', {
-    type,
-    data,
-  });
+/**
+ * 类型安全的 IPC 调用封装（使用新的 IPC 通道）
+ */
+const ipcInvoke = async (channel, data) => {
+  try {
+    return await ipcRenderer.invoke(channel, data);
+  } catch (error) {
+    console.error(`IPC invoke error on channel "${channel}":`, error);
+    throw error;
+  }
 };
 
 window.market = {
@@ -30,17 +26,22 @@ window.market = {
   refreshPlugin(plugin) {
     return remote.getGlobal('LOCAL_PLUGINS').refreshPlugin(plugin);
   },
-  addLocalStartPlugin(plugin) {
-    ipcSend('addLocalStartPlugin', { plugin });
+  // 使用新的 IPC 通道
+  async addLocalStartPlugin(plugin) {
+    await ipcInvoke('localStart:add', { plugin });
   },
-  removeLocalStartPlugin(plugin) {
-    ipcSend('removeLocalStartPlugin', { plugin });
+  async removeLocalStartPlugin(plugin) {
+    await ipcInvoke('localStart:remove', { plugin });
   },
-  dbDump(target) {
-    ipcSend('dbDump', { target });
+  async dbDump(target) {
+    await ipcInvoke('db:dump', { target });
   },
+  async dbImport(target) {
+    await ipcInvoke('db:import', { target });
+  },
+};
 
-  dbImport(target) {
-    ipcSend('dbImport', { target });
-  },
+// 暴露重新注册快捷键的方法
+window.reRegisterHotKey = async () => {
+  await ipcInvoke('system:reRegisterHotKey');
 };
