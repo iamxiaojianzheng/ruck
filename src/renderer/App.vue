@@ -36,7 +36,6 @@ import { watch, ref, toRaw, onMounted } from 'vue';
 import { exec } from 'child_process';
 import { message } from 'ant-design-vue';
 import { getGlobal } from '@electron/remote';
-import { ipcRenderer } from 'electron';
 
 import Result from './components/result.vue';
 import Search from './components/search.vue';
@@ -192,10 +191,8 @@ const choosePlugin = (plugin: any) => {
   const currentConfig = localConfig.getConfig() as any;
   if (currentConfig.pluginSettings?.[currentChoose.name]?.autoDetach) {
     // 等待插件加载完成后再分离，确保 view 的 dom-ready 已触发和 bounds 已设置
-    setTimeout(() => {
-      ipcRenderer.send('msg-trigger', {
-        type: 'detachPlugin',
-      });
+    setTimeout(async () => {
+      await window.ruckAPI.detachPlugin();
     }, 500);
   }
 };

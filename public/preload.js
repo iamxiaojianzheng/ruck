@@ -309,6 +309,10 @@ window.ruckAPI = {
     await ipcInvoke('plugin:openDevTools');
   },
 
+  async sendPluginKeyDown(keyCode, modifiers) {
+    await ipcInvoke('plugin:sendKeyDown', { keyCode, modifiers });
+  },
+
   // ==================== 数据库操作 ====================
   async dbGet(id) {
     return await ipcInvoke('db:get', { id });
@@ -354,6 +358,10 @@ window.ruckAPI = {
 
   async setSubInputValue(text) {
     await ipcInvoke('subInput:setValue', { text });
+  },
+
+  async sendSubInputChange(text) {
+    await ipcInvoke('subInput:onChange', { text });
   },
 
   async getFileIcon(path) {

@@ -26,6 +26,7 @@ export type IPCChannel =
     | 'plugin:remove'
     | 'plugin:detach'
     | 'plugin:openDevTools'
+    | 'plugin:sendKeyDown'
     // 数据库操作
     | 'db:put'
     | 'db:get'
@@ -112,6 +113,10 @@ export interface IPCChannelMap {
     'plugin:remove': { request: void; response: void };
     'plugin:detach': { request: void; response: void };
     'plugin:openDevTools': { request: void; response: void };
+    'plugin:sendKeyDown': {
+        request: { keyCode: string; modifiers: string[] };
+        response: void
+    };
 
     // 数据库操作
     'db:put': {
@@ -311,6 +316,7 @@ export const LEGACY_TO_NEW_CHANNEL_MAP: Record<string, IPCChannel> = {
     removePlugin: 'plugin:remove',
     detachPlugin: 'plugin:detach',
     openPluginDevTools: 'plugin:openDevTools',
+    sendPluginSomeKeyDownEvent: 'plugin:sendKeyDown',
 
     dbPut: 'db:put',
     dbGet: 'db:get',

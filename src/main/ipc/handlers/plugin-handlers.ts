@@ -136,3 +136,26 @@ export function getCurrentPlugin() {
 export function setCurrentPlugin(plugin: any) {
     currentPlugin = plugin;
 }
+
+/**
+ * 发送键盘按下事件到插件
+ */
+export const sendKeyDown: IPCHandler<'plugin:sendKeyDown'> = (event, { keyCode, modifiers }) => {
+    const view = runnerInstance.getView();
+    if (!view || !view.webContents) return;
+
+    // 从 DECODE_KEY 映射获取实际的键码（如果需要）
+    // 这里假设 keyCode 已经是正确的格式
+    if (modifiers.length > 0) {
+        view.webContents.sendInputEvent({
+            type: 'keyDown',
+            modifiers: modifiers as any,
+            keyCode,
+        } as any);
+    } else {
+        view.webContents.sendInputEvent({
+            type: 'keyDown',
+            keyCode,
+        } as any);
+    }
+};

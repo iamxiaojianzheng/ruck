@@ -59,6 +59,7 @@ interface RuckAPI {
   removePlugin(): Promise<void>;
   detachPlugin(): Promise<void>;
   openPluginDevTools(): Promise<void>;
+  sendPluginKeyDown(keyCode: string, modifiers: string[]): Promise<void>;
 
   // 数据库操作
   dbGet(id: string): Promise<any>;
@@ -77,6 +78,7 @@ interface RuckAPI {
   setSubInput(placeholder?: string): Promise<void>;
   removeSubInput(): Promise<void>;
   setSubInputValue(text: string): Promise<void>;
+  sendSubInputChange(text: string): Promise<void>;
 }
 
 /**

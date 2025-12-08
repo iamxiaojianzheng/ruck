@@ -33,6 +33,7 @@ export function registerAllHandlers(): void {
     ipcRegistry.register('plugin:remove', pluginHandlers.removePlugin);
     ipcRegistry.register('plugin:detach', pluginHandlers.detachPlugin);
     ipcRegistry.register('plugin:openDevTools', pluginHandlers.openPluginDevTools);
+    ipcRegistry.register('plugin:sendKeyDown', pluginHandlers.sendKeyDown);
 
     // 数据库操作
     ipcRegistry.register('db:put', dbHandlers.dbPut);

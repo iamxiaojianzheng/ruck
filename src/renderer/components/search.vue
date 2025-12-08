@@ -112,13 +112,9 @@ const keydownEvent = (e: KeyboardEvent, key: string) => {
   shiftKey && modifiers.push('shift');
   altKey && modifiers.push('alt');
   metaKey && modifiers.push('meta');
-  ipcRenderer.send('msg-trigger', {
-    type: 'sendPluginSomeKeyDownEvent',
-    data: {
-      keyCode: e.code,
-      modifiers,
-    },
-  });
+  
+  // 发送键盘事件到插件
+  window.ruckAPI.sendPluginKeyDown(e.code, modifiers);
   const runPluginDisable = ((e.target as HTMLInputElement).value === '' && !props.pluginHistory.length) || props.currentPlugin.name;
   switch (key) {
     case 'up':
@@ -187,10 +183,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 const targetSearch = ({ value }: { value: string }) => {
   if (props.currentPlugin.name) {
-    return ipcRenderer.sendSync('msg-trigger', {
-      type: 'sendSubInputChangeEvent',
-      data: { text: value },
-    });
+    window.ruckAPI.sendSubInputChange(value);
   }
 };
 
