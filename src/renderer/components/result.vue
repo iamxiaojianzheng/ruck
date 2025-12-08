@@ -23,7 +23,11 @@
     </div>
     <a-list v-else item-layout="horizontal" :dataSource="sort(options)">
       <template #renderItem="{ item, index }">
-        <a-list-item @click="() => item.click()" :class="currentSelect === index ? 'active op-item' : 'op-item'">
+        <a-list-item
+          @click="() => item.click()"
+          @contextmenu.prevent="openOptionMenu($event, item)"
+          :class="currentSelect === index ? 'active op-item' : 'op-item'"
+        >
           <a-list-item-meta :description="renderDesc(item.desc)">
             <template #title>
               <span v-html="renderTitle(item.name, item.match)"></span>
@@ -39,7 +43,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, toRaw } from 'vue';
+import { reactive, ref, toRaw, onMounted } from 'vue';
 import type { PropType } from 'vue';
 import type { RuntimePlugin, PluginInfo, FileInfo, PluginOption, AppConfig } from '@/types';
 import type { Menu } from 'electron';
@@ -129,21 +133,68 @@ const openPlugin = (item: PluginInfo) => {
   emit('choosePlugin', item);
 };
 
-const menuState: any = reactive({
+interface MenuContext {
+  plugin: PluginInfo | PluginOption | null;
+  source: 'history' | 'option';
+}
+
+const menuContext = reactive<MenuContext>({
   plugin: null,
+  source: 'history',
 });
 let mainMenus: Menu;
 
-const openMenu = (e: MouseEvent, item: PluginInfo) => {
+/**
+ * 统一的右键菜单显示函数
+ * 根据 source 和 item 类型动态控制菜单项可见性
+ */
+const showContextMenu = (
+  e: MouseEvent,
+  item: PluginInfo | PluginOption,
+  source: 'history' | 'option'
+) => {
+  if (!mainMenus) return;
+
+  menuContext.plugin = item;
+  menuContext.source = source;
+
+  const isHistory = source === 'history';
+  const isApp = item.pluginType === 'app';
+  const hasPin = 'pin' in item;
+
+  // 获取所有菜单项
+  const removeRecentCmd = mainMenus.getMenuItemById('removeRecentCmd');
   const pinToMain = mainMenus.getMenuItemById('pinToMain');
   const unpinFromMain = mainMenus.getMenuItemById('unpinFromMain');
-  pinToMain.visible = !item.pin;
-  unpinFromMain.visible = item.pin;
+  const openFolder = mainMenus.getMenuItemById('openFolder');
+
+  // 1. 删除功能：仅在 History 中显示
+  removeRecentCmd.visible = isHistory;
+
+  // 2. 固定功能：仅在 History 中且有 pin 属性时显示
+  if (isHistory && hasPin) {
+    pinToMain.visible = !item.pin;
+    unpinFromMain.visible = !!item.pin;
+  } else {
+    pinToMain.visible = true;
+    unpinFromMain.visible = false;
+  }
+
+  // 3. 打开文件夹：仅在是本地应用时显示（无论 History 还是 Option）
+  openFolder.visible = isApp;
+
   mainMenus.popup({
     x: e.pageX,
     y: e.pageY,
   });
-  menuState.plugin = item;
+};
+
+const openMenu = (e: MouseEvent, item: PluginInfo) => {
+  showContextMenu(e, item, 'history');
+};
+
+const openOptionMenu = (e: MouseEvent, item: PluginOption) => {
+  showContextMenu(e, item, 'option');
 };
 
 const initMainCmdMenus = () => {
@@ -153,7 +204,7 @@ const initMainCmdMenus = () => {
       label: '从"使用记录"中删除',
       icon: path.join(__static, 'icons', 'delete@2x.png'),
       click: () => {
-        const history = props.pluginHistory.filter((item) => item.name !== menuState.plugin.name);
+        const history = props.pluginHistory.filter((item) => item.name !== menuContext.plugin.name);
         emit('setPluginHistory', toRaw(history));
       },
     },
@@ -162,8 +213,12 @@ const initMainCmdMenus = () => {
       label: '固定到"搜索面板"',
       icon: path.join(__static, 'icons', 'pin@2x.png'),
       click: () => {
-        const history = props.pluginHistory.map((item) => {
-          if (item.name === menuState.plugin.name) {
+        const pluginHistory = structuredClone(props.pluginHistory);
+        if (!pluginHistory.some((item) => item.name === menuContext.plugin.name)) {
+          pluginHistory.push(menuContext.plugin as PluginInfo);
+        }
+        const history = pluginHistory.map((item) => {
+          if (item.name === menuContext.plugin.name) {
             item.pin = true;
           }
           return item;
@@ -177,7 +232,7 @@ const initMainCmdMenus = () => {
       icon: path.join(__static, 'icons', 'unpin@2x.png'),
       click: () => {
         const history = props.pluginHistory.map((item) => {
-          if (item.name === menuState.plugin.name) {
+          if (item.name === menuContext.plugin.name) {
             item.pin = false;
           }
           return item;
@@ -185,11 +240,29 @@ const initMainCmdMenus = () => {
         emit('setPluginHistory', toRaw(history));
       },
     },
+    {
+      id: 'openFolder',
+      label: '打开所在文件夹',
+      icon: path.join(__static, 'icons', 'open-folder@2x.png'),
+      click: () => {
+        const plugin = menuContext.plugin;
+        if (plugin && plugin.pluginType === 'app' && plugin.desc) {
+          const targetPath = plugin.desc;
+          const folderPath = path.dirname(targetPath);
+          // 检查文件夹是否存在
+          if (window.require('fs').existsSync(folderPath)) {
+            remote.shell.openPath(folderPath);
+          }
+        }
+      },
+    },
   ];
   mainMenus = remote.Menu.buildFromTemplate(menu);
 };
 
-initMainCmdMenus();
+onMounted(() => {
+  initMainCmdMenus();
+});
 </script>
 
 <style lang="less">

@@ -26,7 +26,7 @@ const fileIcon = require('extract-file-icon');
 
 const getico = (iconPath: string, originFile: string, target: string) => {
   try {
-    const buffer = fileIcon(originFile, 32) || fileIcon(target, 32);
+    const buffer = fileIcon(target, 32) || fileIcon(originFile, 32);
     if (buffer) {
       fs.writeFile(iconPath, buffer, 'base64', () => {
         return;

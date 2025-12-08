@@ -107,8 +107,8 @@ export interface PluginOption {
   icon: string;
   /** 选项描述 */
   desc: string;
-  /** 选项类型 */
-  type: string;
+  /** 选项类型（已废弃，使用 pluginType） */
+  type?: string;
   /** 匹配位置（支持多位置高亮）*/
   match: number[][] | false;
   /** 显示优先级 */
@@ -117,6 +117,8 @@ export interface PluginOption {
   click: () => void;
   /** logo路径 */
   logoPath?: string;
+  /** 插件应用类型 */
+  pluginType?: 'ui' | 'system' | 'app';
 }
 
 /** 运行时插件信息（包含运行上下文） */

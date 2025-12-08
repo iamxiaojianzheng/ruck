@@ -152,12 +152,16 @@ const choosePlugin = (plugin: any) => {
 
   const localPlugins = getGlobal('LOCAL_PLUGINS').getLocalPlugins();
   const currentChoose = plugin || pluginHistory.value[currentSelect.value];
-
   // 处理应用类型
   if (currentChoose.pluginType === 'app') {
     changePluginHistory(currentChoose);
     try {
-      exec(currentChoose.action);
+      // 优先使用 click，因为它可能包含额外的逻辑
+      if (currentChoose.click) {
+        currentChoose.click();
+      } else if (currentChoose.action) {
+        exec(currentChoose.action);
+      }
     } catch (e) {
       message.error('启动应用失败');
     }

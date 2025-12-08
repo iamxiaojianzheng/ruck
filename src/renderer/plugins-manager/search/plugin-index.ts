@@ -72,7 +72,7 @@ export function rebuildPluginIndex() {
 /**
  * 获取插件索引
  */
-export function getPluginIndex() {
+export function getPluginIndex(): PluginIndexItem[] {
   if (!indexBuilt) {
     buildPluginIndex();
   }

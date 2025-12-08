@@ -1,7 +1,7 @@
-import { ref, watch } from 'vue';
+import { ref, watch, type Ref } from 'vue';
 import debounce from 'lodash.debounce';
 import { ipcRenderer } from 'electron';
-import type { Cmd, Feature, PluginOption as Option } from '@/types';
+import type { Cmd, Feature, PluginOption as Option, RuntimePlugin } from '@/types';
 import pluginClickEvent from './pluginClickEvent';
 import clipboardWatch from './clipboardWatch';
 import { cachedPinyinMatch } from './cache';
@@ -16,40 +16,31 @@ function formatReg(regStr: string) {
   return new RegExp(pattern, flags);
 }
 
-/**
- * 根据搜索值匹配符合规则的CMD
- */
-function matchCmds(cmds: Cmd[], value: string, strict = false) {
-  return cmds.filter((cmd) => {
-    if (typeof cmd === 'string') {
-      return !!cachedPinyinMatch(cmd, value);
-    }
-    if (cmd.type === 'regex' && typeof cmd.match === 'string' && !strict) {
-      const match: string = cmd.match;
-      return formatReg(match).test(value);
-    }
-    if (cmd.type === 'over' && !strict) {
-      return true;
-    }
-    return false;
-  });
+interface OptionsManagerParams {
+  searchValue: Ref<string>;
+  appList: Ref<any[]>;
+  openPlugin: (plugin: any, option?: Option) => void;
+  currentPlugin: Ref<Partial<RuntimePlugin>>;
 }
 
-const optionsManager = ({ searchValue, appList, openPlugin, currentPlugin }) => {
+const optionsManager = ({ searchValue, appList, openPlugin, currentPlugin }: OptionsManagerParams) => {
   const optionsRef = ref([]);
 
   // 全局快捷键
   ipcRenderer.on('global-short-key', (_, msg) => {
     const options = getOptionsFromSearchValue(msg, true);
-    options[0].click();
+    if (options.length > 0) {
+      options[0].click();
+    }
   });
 
-  const getIndex = (cmd, value: string) => {
+  const getIndex = (cmd: Cmd | string, value: string): number => {
     let index = 0;
-    if (cachedPinyinMatch(cmd.label || cmd, value)) {
+    const label = typeof cmd === 'string' ? cmd : cmd.label;
+    if (cachedPinyinMatch(label, value)) {
       index += 1;
     }
-    if (cmd.label) {
+    if (typeof cmd !== 'string' && cmd.label) {
       index -= 1;
     }
     return index;
@@ -74,7 +65,7 @@ const optionsManager = ({ searchValue, appList, openPlugin, currentPlugin }) => 
       value: 'plugin',
       icon: logoPath || pluginLogo,
       desc: featureExplain,
-      type: pluginType,
+      pluginType: pluginType,
       match: cachedPinyinMatch(cmdLabel, payload),
       zIndex: getIndex(cmd, payload), // 排序权重
       click: () => {
@@ -93,14 +84,11 @@ const optionsManager = ({ searchValue, appList, openPlugin, currentPlugin }) => 
   };
 
   /**
-   * 从搜索值中获取插件选项（使用索引优化）
+   * 搜索插件命令
    */
-  const getOptionsFromSearchValue = (value: string, strict = false) => {
-    let options: Option[] = [];
-
-    // 使用插件索引搜索（从 search 模块）
+  const searchPluginCmds = (value: string, strict: boolean): Option[] => {
     const index = getPluginIndex();
-    options = index
+    return index
       .filter((item: PluginIndexItem) => {
         // 字符串命令：拼音匹配
         if (typeof item.cmd === 'string') {
@@ -123,50 +111,70 @@ const optionsManager = ({ searchValue, appList, openPlugin, currentPlugin }) => 
       .map((item: PluginIndexItem) => {
         return buildPluginOption(item.plugin, item.feature, item.cmd, value, openPlugin);
       });
+  };
 
-    // 再搜索 app
+  /**
+   * 搜索应用
+   */
+  const searchApps = (value: string): Option[] => {
     const appPlugins = appList.value || [];
-    const descMap = new Map();
-    options = [
-      ...options,
-      ...appPlugins
-        .filter((plugin) => {
-          if (!descMap.get(plugin)) {
-            descMap.set(plugin, true);
-            let hasMatch = false;
-            plugin.keyWords.some((keyword) => {
-              const match = cachedPinyinMatch(keyword, value);
-              if (match) {
-                hasMatch = true;
-                // 不要覆盖 plugin.name，保持原始应用名称
-                plugin.match = match;
-                return true;
-              }
-              return false;
-            });
-            return hasMatch;
+    const pluginMatchMap = new Map();
+
+    return appPlugins
+      .filter((plugin) => {
+        if (!pluginMatchMap.has(plugin)) {
+          let matchResult: number[][] | false = false;
+
+          for (const keyword of plugin.keyWords) {
+            const match = cachedPinyinMatch(keyword, value);
+            if (match) {
+              matchResult = match;
+              break;
+            }
           }
-          return false;
-        })
-        .map((plugin) => {
-          return {
-            name: plugin.name,
-            value: plugin.value || 'app',
-            icon: plugin.icon,
-            desc: plugin.desc,
-            match: plugin.match,
-            click: () => {
-              openPlugin(plugin);
-            },
-            keyWords: plugin.keyWords,
-          };
-        }),
-    ];
+
+          if (matchResult) {
+            pluginMatchMap.set(plugin, matchResult);
+            return true;
+          }
+        }
+        return false;
+      })
+      .map((plugin) => {
+        const match = pluginMatchMap.get(plugin);
+        return {
+          name: plugin.name,
+          value: plugin.value || 'app',
+          pluginType: 'app' as const,
+          icon: plugin.icon,
+          desc: plugin.desc,
+          match: match,
+          zIndex: 0, // 应用默认权重
+          click: () => {
+            openPlugin(plugin);
+          },
+        };
+      });
+  };
+
+  /**
+   * 从搜索值中获取插件选项（使用索引优化）
+   */
+  const getOptionsFromSearchValue = (value: string, strict = false) => {
+    // 搜索插件命令
+    const pluginOptions = searchPluginCmds(value, strict);
+
+    // 搜索应用
+    const appOptions = searchApps(value);
+
+    // 合并结果
+    const options = pluginOptions.concat(appOptions);
 
     // 排序
     options.sort((a, b) => {
       return (b.zIndex || 0) - (a.zIndex || 0);
     });
+
     return options;
   };
 
@@ -190,7 +198,7 @@ const optionsManager = ({ searchValue, appList, openPlugin, currentPlugin }) => 
     }
   );
 
-  const setOptionsRef = (options) => {
+  const setOptionsRef = (options: Option[]) => {
     optionsRef.value = options;
   };
 
