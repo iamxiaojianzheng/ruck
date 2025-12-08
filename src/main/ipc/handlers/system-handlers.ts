@@ -9,6 +9,8 @@ import commonConst from '@/common/utils/commonConst';
 import { screenCapture } from '@/core';
 import { getCurrentPlugin } from './plugin-handlers';
 import runnerInstance from '@/main/browsers/runner-instance';
+import iconCache from '@/common/utils/iconCache';
+import { mainLogger as logger } from '@/common/logger';
 
 /**
  * 获取系统路径
@@ -34,11 +36,27 @@ export const shellBeep: IPCHandler<'system:shellBeep'> = () => {
 };
 
 /**
- * 获取文件图标
+ * 获取文件图标（带缓存）
+ * 
+ * 使用 LRU 缓存策略，避免重复获取同一文件的图标，提升性能。
  */
 export const getFileIcon: IPCHandler<'system:getFileIcon'> = async (event, { path }) => {
+  // 检查缓存
+  const cached = iconCache.get(path);
+  if (cached) {
+    logger.debug('图标缓存命中', { path });
+    return cached;
+  }
+
+  // 缓存未命中，获取图标
+  logger.debug('获取文件图标', { path });
   const nativeImage = await app.getFileIcon(path, { size: 'normal' });
-  return nativeImage.toDataURL();
+  const dataURL = nativeImage.toDataURL();
+
+  // 存入缓存
+  iconCache.set(path, dataURL);
+
+  return dataURL;
 };
 
 /**
