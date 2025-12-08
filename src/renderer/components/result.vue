@@ -213,7 +213,7 @@ const initMainCmdMenus = () => {
       label: '固定到"搜索面板"',
       icon: path.join(__static, 'icons', 'pin@2x.png'),
       click: () => {
-        const pluginHistory = structuredClone(props.pluginHistory);
+        const pluginHistory = props.pluginHistory;
         if (!pluginHistory.some((item) => item.name === menuContext.plugin.name)) {
           pluginHistory.push(menuContext.plugin as PluginInfo);
         }
