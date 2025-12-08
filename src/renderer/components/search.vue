@@ -112,10 +112,11 @@ const keydownEvent = (e: KeyboardEvent, key: string) => {
   shiftKey && modifiers.push('shift');
   altKey && modifiers.push('alt');
   metaKey && modifiers.push('meta');
-  
+
   // 发送键盘事件到插件
   window.ruckAPI.sendPluginKeyDown(e.code, modifiers);
-  const runPluginDisable = ((e.target as HTMLInputElement).value === '' && !props.pluginHistory.length) || props.currentPlugin.name;
+  const runPluginDisable =
+    ((e.target as HTMLInputElement).value === '' && !props.pluginHistory.length) || props.currentPlugin.name;
   switch (key) {
     case 'up':
       emit('changeCurrent', -1);

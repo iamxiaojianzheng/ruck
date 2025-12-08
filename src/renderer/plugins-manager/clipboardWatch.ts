@@ -6,6 +6,7 @@ import { clipboard, nativeImage, ipcRenderer } from 'electron';
 import localConfig from '../confOp';
 import pluginClickEvent from './pluginClickEvent';
 import getCopyFiles from '@/common/utils/getCopyFiles';
+import { rendererLogger as logger } from '@/common/logger';
 
 export default ({ currentPlugin, optionsRef, openPlugin, setOptionsRef }) => {
   const clipboardFile: any = ref([]);
@@ -80,7 +81,7 @@ export default ({ currentPlugin, optionsRef, openPlugin, setOptionsRef }) => {
    * strict - 是否开启严格模式，如果开启且未开启自动粘贴，则直接返回。
    */
   const handleInputOrCopyFile = (files: Array<FileInfo>, strict = true) => {
-    console.log('begin handleInputOrCopyFile');
+    logger.debug('开始处理剪贴板文件');
     const config: any = localConfig.getConfig();
 
     // 如果未开启自动粘贴且严格模式为 true，则直接返回
@@ -90,7 +91,7 @@ export default ({ currentPlugin, optionsRef, openPlugin, setOptionsRef }) => {
     if (currentPlugin.value.name) return;
 
     const fileList: Array<FileInfo> = files || getCopyFiles();
-    console.log(fileList);
+    logger.debug('剪贴板文件列表', { count: fileList?.length });
 
     if (fileList) {
       window.setSubInputValue({ value: '' });

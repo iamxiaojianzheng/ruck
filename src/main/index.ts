@@ -15,6 +15,7 @@ import '../common/utils/localPlugin';
 import checkVersion from './common/versionHandler';
 import registerSystemPlugin from './common/registerSystemPlugin';
 import { registerAllHandlers } from './ipc/register-handlers';
+import { mainLogger as logger } from '../common/logger';
 
 /**
  * 应用主类
@@ -28,6 +29,12 @@ class App {
   private isRendererReady = false; // 渲染进程就绪标志
 
   constructor() {
+    logger.info('应用构造开始', {
+      platform: process.platform,
+      version: app.getVersion(),
+      electron: process.versions.electron,
+    });
+
     // 注册自定义协议
     protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { secure: true, standard: true } }]);
 
@@ -36,7 +43,10 @@ class App {
 
     // 检查单实例锁
     const gotTheLock = app.requestSingleInstanceLock();
+    logger.info('单实例锁获取状态', { success: gotTheLock });
+
     if (!gotTheLock) {
+      logger.warn('应用已在运行，退出当前实例');
       app.quit();
     } else {
       // 注册系统插件
@@ -56,7 +66,7 @@ class App {
   public setRendererReady(ready: boolean): void {
     this.isRendererReady = ready;
     if (ready) {
-      console.log('渲染进程初始化完成，窗口现在可以显示');
+      logger.info('渲染进程初始化完成');
     }
   }
 
@@ -73,6 +83,7 @@ class App {
   beforeReady() {
     // macOS 特定处理
     if (commonConst.macOS()) {
+      logger.info('macOS 平台初始化');
       macBeforeOpen();
       if (commonConst.production() && !app.isInApplicationsFolder()) {
         app.moveToApplicationsFolder();
@@ -80,6 +91,7 @@ class App {
         app.dock.hide();
       }
     } else {
+      logger.info('非 macOS 平台初始化，禁用硬件加速');
       // 禁用硬件加速（非 macOS）
       app.disableHardwareAcceleration();
     }
@@ -97,6 +109,8 @@ class App {
    */
   onReady() {
     const readyFunction = async () => {
+      logger.info('应用准备就绪，开始初始化');
+
       // 注册类型安全的 IPC 处理器
       registerAllHandlers();
 
@@ -107,9 +121,14 @@ class App {
       await localConfig.init();
       const config = await localConfig.getConfig();
       const { common, shortCut } = config?.perf || {};
+      logger.info('本地配置加载完成', {
+        appName: common?.appName,
+        showAndHidden: shortCut?.showAndHidden,
+      });
 
       // 首次运行显示引导页
       if (!common.guide) {
+        logger.info('首次运行，显示引导页');
         guide().init();
         common.guide = true;
         localConfig.setConfig(config);
@@ -118,6 +137,7 @@ class App {
       // 创建主窗口
       this.createWindow();
       const mainWindow = this.windowCreator.getWindow();
+      logger.info('主窗口创建完成');
 
       // 初始化 API
       API.init(mainWindow);
@@ -130,6 +150,7 @@ class App {
         if (tooltip) {
           tray.setToolTip(tooltip);
         }
+        logger.info('系统托盘创建完成', { tooltip });
       });
 
       // 注册全局快捷键
@@ -142,6 +163,11 @@ class App {
           API,
         })
       );
+
+      logger.info('应用初始化完成', {
+        version: app.getVersion(),
+        platform: process.platform,
+      });
     };
 
     if (!app.isReady()) {
@@ -202,6 +228,7 @@ class App {
 
     // 即将退出时
     app.on('will-quit', () => {
+      logger.info('应用即将退出');
       // 注销所有快捷键
       globalShortcut.unregisterAll();
     });

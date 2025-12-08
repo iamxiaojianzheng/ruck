@@ -1,5 +1,6 @@
 import { getLocalPlugins, clearPluginCache } from '../cache';
 import type { Feature, Cmd } from '@/types';
+import { rendererLogger as logger } from '@/common/logger';
 
 /**
  * 插件索引模块
@@ -57,7 +58,7 @@ export function buildPluginIndex() {
   });
 
   indexBuilt = true;
-  console.log(`插件索引构建完成，共 ${pluginIndex.length} 个命令`);
+  logger.info('插件索引构建完成', { count: pluginIndex.length });
 }
 
 /**

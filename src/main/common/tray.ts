@@ -9,6 +9,7 @@ import localConfig from '@/main/common/initLocalConfig';
 import { mainWindowShowAndHide } from './mainWindow';
 import { guide } from '../browsers';
 import mainInstance from '../index';
+import { mainLogger as logger } from '@/common/logger';
 
 let mousedown = false;
 let mousedownPoint = { x: 0, y: 0 };
@@ -69,7 +70,7 @@ function createTray(window: BrowserWindow): Promise<Tray> {
     const openSettings = () => {
       // 检查渲染进程是否就绪
       if (!mainInstance.getRendererReady()) {
-        console.log('渲染进程尚未就绪');
+        logger.debug('托盘打开设置失败：渲染进程尚未就绪');
         return;
       }
       window.webContents.executeJavaScript(

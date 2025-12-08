@@ -1,5 +1,6 @@
 import defaultConfig from '@/common/constants/defaultConfig';
 import DBInstance from './db';
+import { mainLogger as logger } from '@/common/logger';
 const LOCAL_CONFIG_KEY = 'rubick-local-config';
 
 const db = new DBInstance();
@@ -18,6 +19,7 @@ const localConfig = {
       await db.dbPut({
         data: { data },
       });
+      logger.info('本地配置初始化完成', { version: defaultConfig.version });
     }
   },
   async getConfig(): Promise<any> {
@@ -39,6 +41,7 @@ const localConfig = {
         },
       },
     });
+    logger.debug('更新本地配置');
   },
 };
 

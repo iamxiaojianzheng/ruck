@@ -1,30 +1,30 @@
 /**
  * 插件管理器模块（渲染进程）
- * 
+ *
  * 本模块是渲染进程的核心模块，负责管理所有与插件相关的操作，包括：
- * 
+ *
  * **插件发现与搜索**：
  * - 系统应用搜索（App）
  * - 已安装插件搜索（UI + System）
  * - 本地启动应用搜索
  * - 插件历史记录管理
  * - 快速搜索索引构建
- * 
+ *
  * **插件生命周期**：
  * - 插件加载
  * - 插件打开/关闭
  * - 插件升级检查
  * - 插件历史记录维护
- * 
+ *
  * **用户交互**：
  * - 搜索框状态管理
  * - 搜索选项展示
  * - 剪贴板监控
  * - 键盘导航
- * 
+ *
  * **状态管理**：
  * 使用 Vue3 的 reactive 和 toRefs 管理插件状态，确保响应式更新。
- * 
+ *
  * @module PluginsManager
  */
 
@@ -44,12 +44,13 @@ import { exec } from 'child_process';
 import { PluginHandler } from '@/core';
 import { PLUGIN_INSTALL_DIR as baseDir, PLUGIN_HISTORY } from '@/renderer/constants/renderer';
 import type { PluginInfo, RuntimePlugin, PluginOption } from '@/types';
+import { rendererLogger as logger } from '@/common/logger';
 
 /**
  * 插件管理器状态接口
- * 
+ *
  * 定义了插件管理器的所有状态数据结构。
- * 
+ *
  * @interface PluginManagerState
  */
 interface PluginManagerState {
@@ -69,10 +70,10 @@ interface PluginManagerState {
 
 /**
  * 创建插件管理器
- * 
+ *
  * 这是一个工厂函数，返回插件管理器的所有方法和状态。
  * 使用组合式 API 风格，便于在 Vue 组件中使用。
- * 
+ *
  * @returns 插件管理器实例
  */
 const createPluginManager = () => {
@@ -93,7 +94,7 @@ const createPluginManager = () => {
 
   /**
    * 初始化插件系统
-   * 
+   *
    * 本方法在应用启动时调用，负责：
    * 1. 初始化插件历史记录
    * 2. 搜索系统应用
@@ -102,8 +103,10 @@ const createPluginManager = () => {
    * 5. 通知主进程渲染进程就绪
    */
   const initPlugins = async () => {
+    logger.info('初始化插件系统开始');
     initPluginHistory();
     appList.value = await appSearch(nativeImage);
+    logger.info('系统应用搜索完成', { count: appList.value.length });
     initLocalStartPlugin();
 
     // 构建插件搜索索引（性能优化）
@@ -111,6 +114,7 @@ const createPluginManager = () => {
 
     // 通知主进程：渲染进程初始化完成
     ipcRenderer.invoke('renderer:ready');
+    logger.info('插件系统初始化完成');
   };
 
   const initPluginHistory = () => {
@@ -157,6 +161,12 @@ const createPluginManager = () => {
   };
 
   const loadPlugin = async (plugin: Partial<RuntimePlugin>) => {
+    logger.info('开始加载插件', {
+      name: plugin.name,
+      originName: plugin.originName,
+      type: plugin.pluginType,
+    });
+
     setSearchValue('');
     window.ruckAPI.setExpendHeight(60);
     state.pluginLoading = true;
@@ -165,25 +175,31 @@ const createPluginManager = () => {
     if (plugin.name === 'rubick-system-feature') return;
     await pluginInstance.upgrade(plugin.originName);
     state.pluginLoading = false;
+
+    logger.info('插件加载完成', { name: plugin.name });
   };
 
   /**
    * 打开插件
-   * 
+   *
    * 核心功能：根据插件类型执行不同的打开逻辑。
-   * 
+   *
    * **插件类型**：
    * - UI 插件：在主窗口中显示界面
    * - System 插件：直接加载运行，无界面
    * - App 插件：启动本地应用
-   * 
+   *
    * **自动分离支持**：
    * 如果插件配置了 autoDetach，则在加载后自动分离到独立窗口。
-   * 
+   *
    * @param plugin 插件信息对象
    * @param option 可选项，用于传递额外的加载选项
    */
   const openPlugin = async (plugin: Partial<RuntimePlugin>, option?: PluginOption) => {
+    logger.info('打开插件', {
+      name: plugin.name,
+      type: plugin.pluginType,
+    });
     window.ruckAPI.removePlugin();
 
     window.initRubick();
@@ -235,13 +251,13 @@ const createPluginManager = () => {
 
   /**
    * 管理插件历史记录
-   * 
+   *
    * 将最近使用的插件添加到历史记录中。
    * 历史记录最多保存 8 个插件，超过则移除最久未使用的。
-   * 
+   *
    * **固定（Pin）功能**：
    * 用户可以“固定”常用插件，固定的插件不会被移除。
-   * 
+   *
    * @param plugin 插件信息对象
    */
   const changePluginHistory = (plugin) => {
@@ -276,6 +292,12 @@ const createPluginManager = () => {
       _id: PLUGIN_HISTORY,
       _rev: result._rev,
       data: newPluginHistory,
+    });
+
+    logger.debug('添加插件历史记录', {
+      pluginName: plugin.name,
+      isPinned: isPin,
+      historyCount: state.pluginHistory.length,
     });
   };
 

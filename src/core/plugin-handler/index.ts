@@ -1,23 +1,23 @@
 /**
  * 插件处理器模块
- * 
+ *
  * 本模块提供了 Ruck 插件系统的核心功能，负责插件的全生命周期管理：
  * - 插件安装（本地开发模式和远程安装）
  * - 插件卸载
  * - 插件更新
  * - 插件升级检查
  * - 插件信息获取
- * 
+ *
  * **核心特性**：
  * 1. **任务队列**：使用 TaskQueue 确保插件操作的串行执行，避免并发冲突
  * 2. **版本缓存**：缓存插件的最新版本信息，减少网络请求
  * 3. **重试机制**：npm 命令执行失败时自动重试（最多 3 次）
  * 4. **Registry 支持**：支持自定义 npm registry，便于内网部署
- * 
+ *
  * **插件管理原理**：
  * Ruck 的插件系统基于 npm 包模式，插件本质上就是 npm 包，带有特殊的 `plugin.json` 配置文件。
  * 通过操作 npm 命令来管理插件的安装、卸载和更新，简单而强大。
- * 
+ *
  * @module PluginHandler
  */
 
@@ -28,15 +28,16 @@ import got from 'got';
 import fixPath from 'fix-path';
 import spawn from 'cross-spawn';
 import axios from 'axios';
+import { pluginLogger as logger } from '@/common/logger';
 
 fixPath();
 
 /**
  * 任务队列类
- * 
+ *
  * 用于串行执行异步任务，确保插件操作不会发生并发冲突。
  * 例如：防止同时安装多个插件导致 npm 锁文件冲突。
- * 
+ *
  * @class TaskQueue
  */
 class TaskQueue {
@@ -54,7 +55,7 @@ class TaskQueue {
 
   /**
    * 执行队列中的任务
-   * 
+   *
    * 如果队列正在运行，直接返回。
    * 否则，依次执行队列中的所有任务。
    */
@@ -68,6 +69,9 @@ class TaskQueue {
           await task();
         } catch (e) {
           console.error('任务执行失败:', e);
+          logger.error('插件任务队列执行失败', {
+            error: e instanceof Error ? e.message : String(e),
+          });
         }
       }
     }
@@ -77,15 +81,15 @@ class TaskQueue {
 
 /**
  * 插件处理器类
- * 
+ *
  * 负责管理所有插件的安装、卸载、更新等操作。
- * 
+ *
  * **工作流程**：
  * 1. 初始化时创建插件存放目录和 package.json
  * 2. 使用 npm 命令进行插件操作
  * 3. 通过任务队列确保操作的串行执行
  * 4. 支持版本检查和自动升级
- * 
+ *
  * **插件存储结构**：
  * ```
  * baseDir/
@@ -98,7 +102,7 @@ class TaskQueue {
  *         ├── plugin.json
  *         └── index.js
  * ```
- * 
+ *
  * @class AdapterHandler
  */
 class AdapterHandler {
@@ -171,10 +175,19 @@ class AdapterHandler {
 
       // 如果有新版本，则进行更新
       if (latestVersion && latestVersion > installedVersion) {
+        logger.info('发现插件新版本，开始升级', {
+          plugin: name,
+          from: installedVersion,
+          to: latestVersion,
+        });
         await this.install([name], { isDev: false });
       }
     } catch (e) {
       console.error(`升级插件 ${name} 失败:`, e);
+      logger.error('插件升级失败', {
+        plugin: name,
+        error: e instanceof Error ? e.message : String(e),
+      });
     }
   }
 
@@ -206,12 +219,18 @@ class AdapterHandler {
    * @param options 选项
    */
   async install(adapters: Array<string>, options: { isDev: boolean }) {
+    logger.info('开始安装插件', { plugins: adapters, isDev: options.isDev });
     return new Promise<void>((resolve, reject) => {
       this.taskQueue.add(async () => {
         try {
           await this._install(adapters, options);
+          logger.info('插件安装完成', { plugins: adapters });
           resolve();
         } catch (e) {
+          logger.error('插件安装失败', {
+            plugins: adapters,
+            error: e instanceof Error ? e.message : String(e),
+          });
           reject(e);
         }
       });
@@ -223,7 +242,12 @@ class AdapterHandler {
    */
   private async _install(adapters: Array<string>, options: { isDev: boolean }) {
     const installCmd = options.isDev ? 'link' : 'install';
+    logger.info('npm 安装开始', {
+      command: installCmd,
+      plugins: adapters,
+    });
     await this.execCommand(installCmd, adapters);
+    logger.info('npm 安装成功', { plugins: adapters });
   }
 
   /**
@@ -232,8 +256,10 @@ class AdapterHandler {
    * @memberof AdapterHandler
    */
   async update(...adapters: string[]) {
+    logger.info('开始更新插件', { plugins: adapters });
     this.taskQueue.add(async () => {
       await this.execCommand('update', adapters);
+      logger.info('插件更新完成', { plugins: adapters });
     });
   }
 
@@ -244,9 +270,11 @@ class AdapterHandler {
    * @memberof AdapterHandler
    */
   async uninstall(adapters: string[], options: { isDev: boolean }) {
+    logger.info('开始卸载插件', { plugins: adapters, isDev: options.isDev });
     this.taskQueue.add(async () => {
       const installCmd = options.isDev ? 'unlink' : 'uninstall';
       await this.execCommand(installCmd, adapters);
+      logger.info('插件卸载完成', { plugins: adapters });
     });
   }
 

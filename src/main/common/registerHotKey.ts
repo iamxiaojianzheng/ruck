@@ -1,12 +1,12 @@
 /**
  * 全局快捷键注册模块
- * 
+ *
  * 本模块负责管理 Ruck 应用的所有全局快捷键，包括：
  * - 主窗口显示/隐藏快捷键（支持普通快捷键和双击修饰键）
  * - 截图快捷键
  * - 分离窗口快捷键（动态注册和取消注册）
  * - 用户自定义全局快捷键
- * 
+ *
  * @module registerHotKey
  */
 
@@ -15,6 +15,7 @@ import screenCapture from '@/core/screen-capture';
 import localConfig from '@/main/common/initLocalConfig';
 import { mainWindowShowAndHide } from './mainWindow';
 import { uIOhook, UiohookKey } from 'uiohook-napi';
+import { mainLogger as logger } from '@/common/logger';
 
 /**
  * 模块级变量：缓存主窗口和 API 实例引用
@@ -25,7 +26,7 @@ let cachedAPI: any = null;
 
 /**
  * 注册所有全局快捷键
- * 
+ *
  * 本函数是快捷键注册的入口点，负责：
  * 1. 设置开机启动
  * 2. 设置暗黑模式和主题
@@ -33,10 +34,10 @@ let cachedAPI: any = null;
  * 4. 注册截图快捷键
  * 5. 注册用户自定义全局快捷键
  * 6. 监听配置变更并重新注册快捷键
- * 
+ *
  * @param mainWindow 主窗口实例
  * @param API API 实例，包含所有窗口操作方法
- * 
+ *
  * @example
  * ```typescript
  * const mainWindow = createMainWindow();
@@ -105,15 +106,19 @@ const registerHotKey = (mainWindow: BrowserWindow, API: any): void => {
 
     if (isDoublePressShortcut) {
       // 双击快捷键（如 Ctrl+Ctrl）详见 uIOhookRegister 函数实现
+      logger.info('注册双击修饰键快捷键', { key: config.perf.shortCut.showAndHidden });
     } else {
       // 注册普通快捷键（如 Ctrl+Space、F8 等）
       globalShortcut.register(config.perf.shortCut.showAndHidden, () => {
+        logger.info('主快捷键触发');
         mainWindowPopUp();
       });
+      logger.info('注册主窗口快捷键', { key: config.perf.shortCut.showAndHidden });
     }
 
     // 截图快捷键
     globalShortcut.register(config.perf.shortCut.capture, () => {
+      logger.info('截图快捷键触发');
       screenCapture(mainWindow, (data) => {
         data &&
           new Notification({
@@ -122,6 +127,7 @@ const registerHotKey = (mainWindow: BrowserWindow, API: any): void => {
           }).show();
       });
     });
+    logger.info('注册截图快捷键', { key: config.perf.shortCut.capture });
 
     globalShortcut.register(config.perf.shortCut.quit, () => {
       // mainWindow.webContents.send('init-rubick');
@@ -160,18 +166,18 @@ export default registerHotKey;
 
 /**
  * 使用 uIOhook 注册双击修饰键监听
- * 
+ *
  * 本函数专门用于处理双击修饰键（如 Ctrl+Ctrl、Option+Option）的快捷键注册。
  * Electron 的 globalShortcut API 不支持双击修饰键，因此使用 uIOhook 库进行底层键盘监听。
- * 
+ *
  * 工作原理：
  * 1. 监听所有键盘按下事件
  * 2. 检测是否为配置的修饰键
  * 3. 计算两次按键的时间间隔
  * 4. 如果间隔小于 300ms，触发回调
- * 
+ *
  * @param callback 当检测到双击修饰键时的回调函数
- * 
+ *
  * @example
  * ```typescript
  * uIOhookRegister(() => {
@@ -215,20 +221,20 @@ function uIOhookRegister(callback: () => void) {
  * 应在插件打开时调用
  */
 export const registerSeparateShortcut = async (): Promise<void> => {
-  console.log('[registerSeparateShortcut] 开始注册分离窗口快捷键');
+  logger.info('开始注册分离窗口快捷键');
 
   if (!cachedMainWindow || !cachedAPI) {
-    console.warn('[registerSeparateShortcut] Cannot register separate shortcut: mainWindow or API not cached');
+    logger.warn('无法注册分离窗口快捷键：窗口或 API 未缓存');
     return;
   }
 
   const config = await localConfig.getConfig();
   const shortcut = config.perf.shortCut.separate;
 
-  console.log('[registerSeparateShortcut] 快捷键配置:', shortcut);
+  logger.debug('分离窗口快捷键配置', { shortcut });
 
   if (!shortcut) {
-    console.warn('[registerSeparateShortcut] 快捷键配置为空，跳过注册');
+    logger.debug('快捷键配置为空，跳过注册');
     return;
   }
 
@@ -237,35 +243,34 @@ export const registerSeparateShortcut = async (): Promise<void> => {
 
   // 注册分离窗口快捷键
   const success = globalShortcut.register(shortcut, () => {
-    console.log('[registerSeparateShortcut] 快捷键被触发');
+    logger.debug('分离窗口快捷键触发');
     if (cachedAPI && cachedMainWindow) {
       cachedAPI.detachPlugin(null, cachedMainWindow);
     }
   });
 
   if (!success) {
-    console.warn(`[registerSeparateShortcut] Failed to register separate shortcut: ${shortcut}`);
+    logger.warn('注册分离窗口快捷键失败', { shortcut });
   } else {
-    console.log(`[registerSeparateShortcut] ✅ 成功注册分离窗口快捷键: ${shortcut}`);
+    logger.info('成功注册分离窗口快捷键', { shortcut });
   }
 };
-
 
 /**
  * 取消注册分离窗口快捷键
  * 应在插件关闭时调用
  */
 export const unregisterSeparateShortcut = async (): Promise<void> => {
-  console.log('[unregisterSeparateShortcut] 开始取消注册分离窗口快捷键');
+  logger.info('开始取消注册分离窗口快捷键');
 
   const config = await localConfig.getConfig();
   const shortcut = config.perf.shortCut.separate;
 
   if (!shortcut) {
-    console.warn('[unregisterSeparateShortcut] 快捷键配置为空，跳过取消注册');
+    logger.debug('快捷键配置为空，跳过取消注册');
     return;
   }
 
   globalShortcut.unregister(shortcut);
-  console.log(`[unregisterSeparateShortcut] ✅ 已取消注册分离窗口快捷键: ${shortcut}`);
+  logger.info('已取消注册分离窗口快捷键', { shortcut });
 };

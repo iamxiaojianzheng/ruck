@@ -5,101 +5,106 @@
 
 import { ipcMain, BrowserWindow } from 'electron';
 import type { IPCChannel, IPCChannelMap, IPCHandler, IPCHandlerMap } from '@/types/ipc';
+import { mainLogger as logger } from '@/common/logger';
 
 /**
  * IPC 处理器注册表
  */
 class IPCRegistry {
-    private handlers: Partial<IPCHandlerMap> = {};
-    private initialized = false;
+  private handlers: Partial<IPCHandlerMap> = {};
+  private initialized = false;
 
-    /**
-     * 注册 IPC 处理器
-     * @param channel 通道名称
-     * @param handler 处理器函数
-     */
-    register<T extends IPCChannel>(channel: T, handler: IPCHandler<T>): void {
-        if (this.handlers[channel]) {
-            console.warn(`IPC handler for channel "${channel}" already registered, overwriting...`);
-        }
+  /**
+   * 注册 IPC 处理器
+   * @param channel 通道名称
+   * @param handler 处理器函数
+   */
+  register<T extends IPCChannel>(channel: T, handler: IPCHandler<T>): void {
+    if (this.handlers[channel]) {
+      logger.warn('IPC 处理器已注册，将被覆盖', { channel });
+    }
 
-        // 使用类型断言避免复杂的交叉类型限制
-        (this.handlers as any)[channel] = handler;
+    // 使用类型断言避免复杂的交叉类型限制
+    (this.handlers as any)[channel] = handler;
 
-        // 注册到 Electron IPC
-        ipcMain.handle(channel, async (event, request) => {
-            try {
-                return await handler(event, request);
-            } catch (error) {
-                console.error(`IPC handler error for channel "${channel}":`, error);
-                throw error;
-            }
+    // 注册到 Electron IPC
+    ipcMain.handle(channel, async (event, request) => {
+      try {
+        return await handler(event, request);
+      } catch (error) {
+        logger.error('IPC 处理器执行错误', {
+          channel,
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
         });
-    }
+        throw error;
+      }
+    });
+  }
 
-    /**
-     * 批量注册 IPC 处理器
-     * @param handlers 处理器映射表
-     */
-    registerBatch(handlers: Partial<IPCHandlerMap>): void {
-        Object.entries(handlers).forEach(([channel, handler]) => {
-            this.register(channel as IPCChannel, handler as IPCHandler<any>);
-        });
-    }
+  /**
+   * 批量注册 IPC 处理器
+   * @param handlers 处理器映射表
+   */
+  registerBatch(handlers: Partial<IPCHandlerMap>): void {
+    Object.entries(handlers).forEach(([channel, handler]) => {
+      this.register(channel as IPCChannel, handler as IPCHandler<any>);
+    });
+  }
 
-    /**
-     * 移除 IPC 处理器
-     * @param channel 通道名称
-     */
-    unregister(channel: IPCChannel): void {
-        delete this.handlers[channel];
-        ipcMain.removeHandler(channel);
-    }
+  /**
+   * 移除 IPC 处理器
+   * @param channel 通道名称
+   */
+  unregister(channel: IPCChannel): void {
+    delete this.handlers[channel];
+    ipcMain.removeHandler(channel);
+  }
 
-    /**
-     * 移除所有处理器
-     */
-    unregisterAll(): void {
-        Object.keys(this.handlers).forEach((channel) => {
-            ipcMain.removeHandler(channel);
-        });
-        this.handlers = {};
-    }
+  /**
+   * 移除所有处理器
+   */
+  unregisterAll(): void {
+    Object.keys(this.handlers).forEach((channel) => {
+      ipcMain.removeHandler(channel);
+    });
+    this.handlers = {};
+  }
 
-    /**
-     * 获取已注册的处理器
-     */
-    getHandler<T extends IPCChannel>(channel: T): IPCHandler<T> | undefined {
-        return this.handlers[channel] as IPCHandler<T> | undefined;
-    }
+  /**
+   * 获取已注册的处理器
+   */
+  getHandler<T extends IPCChannel>(channel: T): IPCHandler<T> | undefined {
+    return this.handlers[channel] as IPCHandler<T> | undefined;
+  }
 
-    /**
-     * 检查通道是否已注册
-     */
-    hasHandler(channel: IPCChannel): boolean {
-        return channel in this.handlers;
-    }
+  /**
+   * 检查通道是否已注册
+   */
+  hasHandler(channel: IPCChannel): boolean {
+    return channel in this.handlers;
+  }
 
-    /**
-     * 获取所有已注册的通道
-     */
-    getRegisteredChannels(): IPCChannel[] {
-        return Object.keys(this.handlers) as IPCChannel[];
-    }
+  /**
+   * 获取所有已注册的通道
+   */
+  getRegisteredChannels(): IPCChannel[] {
+    return Object.keys(this.handlers) as IPCChannel[];
+  }
 
-    /**
-     * 标记为已初始化
-     */
-    markInitialized(): void {
-        this.initialized = true;
-    }
+  /**
+   * 标记为已初始化
+   */
+  markInitialized(): void {
+    this.initialized = true;
+  }
 
-    /**
-     * 检查是否已初始化
-     */
-    isInitialized(): boolean {
-        return this.initialized;
-    }
+  /**
+   * 检查是否已初始化
+   */
+  isInitialized(): boolean {
+    return this.initialized;
+  }
 }
 
 /**
@@ -111,41 +116,38 @@ export const ipcRegistry = new IPCRegistry();
  * 向渲染进程发送事件的辅助函数
  */
 export function sendToRenderer<T extends keyof import('@/types/ipc').IPCEventPayloadMap>(
-    window: BrowserWindow,
-    channel: T,
-    payload: import('@/types/ipc').IPCEventPayloadMap[T]
+  window: BrowserWindow,
+  channel: T,
+  payload: import('@/types/ipc').IPCEventPayloadMap[T]
 ): void {
-    if (!window || window.isDestroyed()) {
-        console.warn(`Cannot send to renderer: window is destroyed (channel: ${channel})`);
-        return;
-    }
+  if (!window || window.isDestroyed()) {
+    logger.warn('无法发送消息到渲染进程：窗口已销毁', { channel: String(channel) });
+    return;
+  }
 
-    window.webContents.send(channel, payload);
+  window.webContents.send(channel, payload);
 }
 
 /**
  * 向所有渲染进程发送事件
  */
 export function broadcastToRenderers<T extends keyof import('@/types/ipc').IPCEventPayloadMap>(
-    channel: T,
-    payload: import('@/types/ipc').IPCEventPayloadMap[T]
+  channel: T,
+  payload: import('@/types/ipc').IPCEventPayloadMap[T]
 ): void {
-    BrowserWindow.getAllWindows().forEach((window) => {
-        sendToRenderer(window, channel, payload);
-    });
+  BrowserWindow.getAllWindows().forEach((window) => {
+    sendToRenderer(window, channel, payload);
+  });
 }
 
 /**
  * 执行 JavaScript 代码的辅助函数（类型安全版本）
  * 减少直接使用 executeJavaScript，仅在必要时使用
  */
-export async function executeInRenderer<T = any>(
-    window: BrowserWindow,
-    code: string
-): Promise<T> {
-    if (!window || window.isDestroyed()) {
-        throw new Error('Cannot execute in renderer: window is destroyed');
-    }
+export async function executeInRenderer<T = any>(window: BrowserWindow, code: string): Promise<T> {
+  if (!window || window.isDestroyed()) {
+    throw new Error('Cannot execute in renderer: window is destroyed');
+  }
 
-    return window.webContents.executeJavaScript(code);
+  return window.webContents.executeJavaScript(code);
 }

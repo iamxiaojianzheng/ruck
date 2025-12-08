@@ -40,13 +40,13 @@ export default (): RunnerBrowser => {
       console.log('[runner] VIEW BEING SET! old:', _view, 'new:', newValue);
       console.log('[runner] Stack trace:', new Error().stack);
       _view = newValue;
-    }
+    },
   };
 
   // 使用 getter/setter 替代直接变量
   Object.defineProperty(viewHandler, 'value', {
     get: viewHandler.get,
-    set: viewHandler.set
+    set: viewHandler.set,
   });
 
   // 注意：由于 JS 限制，我们需要在代码中使用 _view 而不是通过 proxy

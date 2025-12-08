@@ -1,5 +1,6 @@
 // for referer policy, we can't use it in renderer
 import axios from 'axios';
+import { mainLogger as logger } from '@/common/logger';
 const RELEASE_URL = 'https://api.github.com/repos/iamxiaojianzheng/ruck/releases';
 
 export const getLatestVersion = async (isCheckBetaUpdate = false) => {
@@ -22,7 +23,9 @@ export const getLatestVersion = async (isCheckBetaUpdate = false) => {
         return normalList[0].name;
       });
   } catch (err) {
-    console.log(err);
+    logger.warn('获取最新版本信息失败', {
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
   return res;
 };

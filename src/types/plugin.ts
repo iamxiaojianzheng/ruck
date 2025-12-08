@@ -86,10 +86,10 @@ export interface PluginContext {
   type: 'text' | 'img' | 'files' | 'regex' | 'over' | 'window';
   /** 载荷数据 */
   payload:
-  | string // text/regex/over
-  | string // img (Base64)
-  | FileInfo[] // files
-  | Record<string, any>; // window
+    | string // text/regex/over
+    | string // img (Base64)
+    | FileInfo[] // files
+    | Record<string, any>; // window
 }
 
 /** 插件运行状态 */

@@ -1,6 +1,7 @@
 import { BrowserWindow } from 'electron';
 import winPosition from './getWinPosition';
 import mainInstance from '../index';
+import { mainLogger as logger } from '@/common/logger';
 
 // 显示或隐藏主窗口
 function mainWindowShowAndHide(mainWindow: BrowserWindow) {
@@ -8,12 +9,13 @@ function mainWindowShowAndHide(mainWindow: BrowserWindow) {
 
   // 如果窗口已显示，则隐藏
   if (currentShow) {
+    logger.info('隐藏主窗口');
     return mainWindow.hide();
   }
 
   // 检查渲染进程是否就绪
   if (!mainInstance.getRendererReady()) {
-    console.log('渲染进程尚未就绪，忽略显示请求');
+    logger.debug('渲染进程尚未就绪，忽略显示请求');
     return;
   }
 
@@ -27,6 +29,8 @@ function mainWindowShowAndHide(mainWindow: BrowserWindow) {
   });
   mainWindow.setPosition(wx, wy);
   mainWindow.show();
+
+  logger.info('显示主窗口', { position: { x: wx, y: wy } });
 }
 
 export { mainWindowShowAndHide };

@@ -2,21 +2,16 @@
 import path from 'path';
 import fs from 'fs';
 import { PLUGIN_INSTALL_DIR } from '@/common/constants/main';
+import { mainLogger as logger } from '@/common/logger';
 
 export default () => {
   // 读取所有插件
   const totalPlugins = global.LOCAL_PLUGINS.getLocalPlugins();
-  let systemPlugins = totalPlugins.filter(
-    (plugin) => plugin.pluginType === 'system'
-  );
+  let systemPlugins = totalPlugins.filter((plugin) => plugin.pluginType === 'system');
   systemPlugins = systemPlugins
     .map((plugin) => {
       try {
-        const pluginPath = path.resolve(
-          PLUGIN_INSTALL_DIR,
-          'node_modules',
-          plugin.name
-        );
+        const pluginPath = path.resolve(PLUGIN_INSTALL_DIR, 'node_modules', plugin.name);
         return {
           ...plugin,
           indexPath: path.join(pluginPath, './', plugin.entry),
@@ -45,7 +40,10 @@ export default () => {
       try {
         hook && hook(ctx);
       } catch (e) {
-        console.log(e);
+        logger.error('系统插件 onReady 钩子执行失败', {
+          error: e instanceof Error ? e.message : String(e),
+          stack: e instanceof Error ? e.stack : undefined,
+        });
       }
     });
   };

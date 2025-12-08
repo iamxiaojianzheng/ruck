@@ -8,7 +8,6 @@
 
 <script setup lang="ts">
 import { toRefs } from 'vue';
-import { ipcRenderer } from 'electron';
 import { MoreOutlined } from '@ant-design/icons-vue';
 import type { PropType } from 'vue';
 import type { AppConfig, RuntimePlugin } from '@/types';
@@ -75,10 +74,10 @@ const showMenu = async () => {
   if (latestConfig) {
     emit('updateConfig', latestConfig);
   }
-  
+
   // 使用最新获取的配置来构建菜单
   const currentConfig = latestConfig || config.value;
-  
+
   let pluginMenu: any = [];
 
   if (isDetach.value) {

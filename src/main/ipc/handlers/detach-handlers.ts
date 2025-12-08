@@ -14,79 +14,82 @@ let detachWindow: BrowserWindow | null = null;
  * 在创建 detach 窗口时调用
  */
 export const setDetachWindow = (win: BrowserWindow | null) => {
-    detachWindow = win;
+  detachWindow = win;
 };
 
 /**
  * 获取配置
  */
 export const getConfig: IPCHandler<'detach:getConfig'> = async () => {
-    return await localConfig.getConfig();
+  return await localConfig.getConfig();
 };
 
 /**
  * 更新插件设置
  */
-export const updatePluginSetting: IPCHandler<'detach:updatePluginSetting'> = async (event, { pluginName, key, value }) => {
-    const config = await localConfig.getConfig();
-    if (!config.pluginSettings) {
-        config.pluginSettings = {};
-    }
-    if (!config.pluginSettings[pluginName]) {
-        config.pluginSettings[pluginName] = {};
-    }
-    config.pluginSettings[pluginName][key] = value;
-    await localConfig.setConfig(config);
-    return await localConfig.getConfig();
+export const updatePluginSetting: IPCHandler<'detach:updatePluginSetting'> = async (
+  event,
+  { pluginName, key, value }
+) => {
+  const config = await localConfig.getConfig();
+  if (!config.pluginSettings) {
+    config.pluginSettings = {};
+  }
+  if (!config.pluginSettings[pluginName]) {
+    config.pluginSettings[pluginName] = {};
+  }
+  config.pluginSettings[pluginName][key] = value;
+  await localConfig.setConfig(config);
+  return await localConfig.getConfig();
 };
 
 /**
  * 最小化窗口
  */
 export const minimize: IPCHandler<'detach:minimize'> = () => {
-    if (!detachWindow) return;
-    detachWindow.focus();
-    detachWindow.minimize();
+  if (!detachWindow) return;
+  detachWindow.focus();
+  detachWindow.minimize();
 };
 
 /**
  * 最大化/取消最大化窗口
  */
 export const maximize: IPCHandler<'detach:maximize'> = () => {
-    if (!detachWindow) return;
-    detachWindow.isMaximized() ? detachWindow.unmaximize() : detachWindow.maximize();
+  if (!detachWindow) return;
+  detachWindow.isMaximized() ? detachWindow.unmaximize() : detachWindow.maximize();
 };
 
 /**
  * 关闭窗口
  */
 export const close: IPCHandler<'detach:close'> = () => {
-    if (!detachWindow) return;
-    detachWindow.close();
+  if (!detachWindow) return;
+  detachWindow.close();
 };
 
 /**
  * 置顶窗口
  */
 export const pin: IPCHandler<'detach:pin'> = () => {
-    if (!detachWindow) return;
-    detachWindow.setAlwaysOnTop(true);
+  if (!detachWindow) return;
+  detachWindow.setAlwaysOnTop(true);
 };
 
 /**
  * 取消置顶
  */
 export const unpin: IPCHandler<'detach:unpin'> = () => {
-    if (!detachWindow) return;
-    detachWindow.setAlwaysOnTop(false);
+  if (!detachWindow) return;
+  detachWindow.setAlwaysOnTop(false);
 };
 
 /**
  * 退出全屏
  */
 export const endFullScreen: IPCHandler<'detach:endFullScreen'> = () => {
-    if (!detachWindow) return;
-    detachWindow.isFullScreen() && detachWindow.setFullScreen(false);
+  if (!detachWindow) return;
+  detachWindow.isFullScreen() && detachWindow.setFullScreen(false);
 };
 
 /**
@@ -94,10 +97,10 @@ export const endFullScreen: IPCHandler<'detach:endFullScreen'> = () => {
  * 触发子输入框变化事件
  */
 export const inputChange: IPCHandler<'detach:inputChange'> = async (event, { text }) => {
-    // 获取view并触发输入变化事件
-    const view = detachWindow?.getBrowserView();
-    if (view) {
-        const evalJs = `
+  // 获取view并触发输入变化事件
+  const view = detachWindow?.getBrowserView();
+  if (view) {
+    const evalJs = `
             if(window.rubick && window.rubick.hooks && typeof window.rubick.hooks.onSubInputChange === 'function') {
                 try {
                     window.rubick.hooks.onSubInputChange({ text: ${JSON.stringify(text)} });
@@ -106,18 +109,18 @@ export const inputChange: IPCHandler<'detach:inputChange'> = async (event, { tex
                 }
             }
         `;
-        view.webContents.executeJavaScript(evalJs);
-    }
+    view.webContents.executeJavaScript(evalJs);
+  }
 };
 
 /**
  * 打开 detach 窗口的插件开发者工具
  */
 export const openDevTools: IPCHandler<'detach:openDevTools'> = () => {
-    if (!detachWindow) return;
+  if (!detachWindow) return;
 
-    const view = detachWindow.getBrowserView();
-    if (view && view.webContents) {
-        view.webContents.openDevTools({ mode: 'detach' });
-    }
+  const view = detachWindow.getBrowserView();
+  if (view && view.webContents) {
+    view.webContents.openDevTools({ mode: 'detach' });
+  }
 };
