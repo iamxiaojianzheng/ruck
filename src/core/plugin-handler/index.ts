@@ -84,22 +84,7 @@ class AdapterHandler {
     this.baseDir = options.baseDir;
 
     const defaultRegistry = 'https://registry.npmmirror.com';
-    let register = options.registry || defaultRegistry;
-
-    try {
-      if (ipcRenderer) {
-        const dbdata = ipcRenderer.sendSync('msg-trigger', {
-          type: 'dbGet',
-          data: { id: 'rubick-localhost-config' },
-        });
-        if (dbdata && dbdata.data && dbdata.data.register) {
-          register = dbdata.data.register || defaultRegistry;
-        }
-      }
-    } catch (e) {
-      // 忽略错误，使用默认源
-      console.error('获取数据库配置失败:', e);
-    }
+    const register = options.registry || defaultRegistry;
 
     // 确保 registry 始终以斜杠结尾，避免 URL 拼接错误
     this.registry = register.endsWith('/') ? register : register + '/';

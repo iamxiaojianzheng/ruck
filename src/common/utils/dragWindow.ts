@@ -31,10 +31,7 @@ const useDrag = () => {
   };
 
   const moveWindow = () => {
-    ipcRenderer.send('msg-trigger', {
-      type: 'windowMoving',
-      data: { mouseX, mouseY, width: clientWidth, height: clientHeight },
-    });
+    window.ruckAPI.windowMoving(mouseX, mouseY, clientWidth, clientHeight);
     if (draggable) animationId = requestAnimationFrame(moveWindow);
   };
 

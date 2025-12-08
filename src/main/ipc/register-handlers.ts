@@ -97,6 +97,7 @@ export function registerAllHandlers(): void {
     ipcRegistry.register('detach:unpin', detachHandlers.unpin);
     ipcRegistry.register('detach:endFullScreen', detachHandlers.endFullScreen);
     ipcRegistry.register('detach:inputChange', detachHandlers.inputChange);
+    ipcRegistry.register('detach:openDevTools', detachHandlers.openDevTools);
 
     // 渲染进程就绪
     ipcRegistry.register('renderer:ready', otherHandlers.rendererReady);

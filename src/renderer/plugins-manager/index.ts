@@ -49,9 +49,7 @@ const createPluginManager = () => {
     rebuildPluginIndex();
 
     // 通知主进程：渲染进程初始化完成
-    ipcRenderer.send('msg-trigger', {
-      type: 'rendererReady',
-    });
+    ipcRenderer.invoke('renderer:ready');
   };
 
   const initPluginHistory = () => {
@@ -81,11 +79,8 @@ const createPluginManager = () => {
     }
   };
 
-  const initLocalStartPlugin = () => {
-    const result = ipcRenderer.sendSync('msg-trigger', {
-      type: 'dbGet',
-      data: { id: 'rubick-local-start-app' },
-    });
+  const initLocalStartPlugin = async () => {
+    const result = await window.ruckAPI.dbGet('rubick-local-start-app');
     if (result && result.value) {
       appList.value.push(...result.value);
     }
@@ -102,10 +97,7 @@ const createPluginManager = () => {
 
   const loadPlugin = async (plugin: Partial<RuntimePlugin>) => {
     setSearchValue('');
-    ipcRenderer.send('msg-trigger', {
-      type: 'setExpendHeight',
-      data: 60,
-    });
+    window.ruckAPI.setExpendHeight(60);
     state.pluginLoading = true;
     state.currentPlugin = plugin;
     // 自带的插件不需要检测更新
@@ -115,15 +107,13 @@ const createPluginManager = () => {
   };
 
   const openPlugin = async (plugin: Partial<RuntimePlugin>, option?: PluginOption) => {
-    ipcRenderer.send('msg-trigger', {
-      type: 'removePlugin',
-    });
+    window.ruckAPI.removePlugin();
 
     window.initRubick();
 
     if (plugin.pluginType === 'ui' || plugin.pluginType === 'system') {
       if (state?.currentPlugin?.name === plugin.name) {
-        window.rubick.showMainWindow();
+        window.ruckAPI.showMainWindow();
         return;
       }
       await loadPlugin(plugin);
@@ -146,9 +136,7 @@ const createPluginManager = () => {
       if (currentConfig?.pluginSettings?.[plugin.name]?.autoDetach) {
         // 等待插件加载完成后再分离，确保 view 的 dom-ready 已触发和 bounds 已设置
         setTimeout(() => {
-          ipcRenderer.send('msg-trigger', {
-            type: 'detachPlugin',
-          });
+          window.ruckAPI.detachPlugin();
         }, 500);
       }
     }
@@ -292,9 +280,7 @@ const createPluginManager = () => {
   };
 
   window.searchFocus = (args, strict) => {
-    ipcRenderer.send('msg-trigger', {
-      type: 'removePlugin',
-    });
+    window.ruckAPI.removePlugin();
     window.initRubick();
     searchFocus(args, strict);
   };

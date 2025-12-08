@@ -109,3 +109,15 @@ export const inputChange: IPCHandler<'detach:inputChange'> = async (event, { tex
         view.webContents.executeJavaScript(evalJs);
     }
 };
+
+/**
+ * 打开 detach 窗口的插件开发者工具
+ */
+export const openDevTools: IPCHandler<'detach:openDevTools'> = () => {
+    if (!detachWindow) return;
+
+    const view = detachWindow.getBrowserView();
+    if (view && view.webContents) {
+        view.webContents.openDevTools({ mode: 'detach' });
+    }
+};

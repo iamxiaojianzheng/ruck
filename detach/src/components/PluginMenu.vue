@@ -69,26 +69,31 @@ const isAutoDetach = () => {
 
 const changeAutoDetach = async () => {
   const pluginName = currentPlugin.value.name;
-  const currentValue = config.value.pluginSettings?.[pluginName]?.autoDetach || false;
+  let cfg = JSON.parse(JSON.stringify(config.value));
+  if (!cfg.pluginSettings) cfg.pluginSettings = {};
+  if (!cfg.pluginSettings[pluginName]) cfg.pluginSettings[pluginName] = {};
   
-  const updatedConfig = await window.detachAPI.updatePluginSetting(
-    pluginName,
-    'autoDetach',
-    !currentValue
-  );
+  const newValue = !cfg.pluginSettings[pluginName].autoDetach;
+  cfg.pluginSettings[pluginName].autoDetach = newValue;
   
-  emit('updateConfig', updatedConfig);
+  // 通过 IPC 保存插件设置
+  await window.detachAPI.updatePluginSetting(pluginName, 'autoDetach', newValue);
+  
+  // 更新本地状态
+  emit('updateConfig', cfg);
 };
 
 const changeHideOnBlur = () => {
   let cfg = JSON.parse(JSON.stringify(config.value));
   cfg.perf.common.hideOnBlur = !cfg.perf.common.hideOnBlur;
+  // 通用配置只更新本地状态，不持久化（由主窗口负责）
   emit('updateConfig', cfg);
 };
 
 const changeLang = (lang: string) => {
   let cfg = JSON.parse(JSON.stringify(config.value));
   cfg.perf.common.lang = lang;
+  // 通用配置只更新本地状态，不持久化（由主窗口负责）
   emit('updateConfig', cfg);
 };
 
@@ -144,14 +149,15 @@ const showMenu = () => {
       });
     }
 
-    // if (ipcRenderer.sendSync('msg-trigger', { type: 'isDev' })) {
-    //   otherMenu.unshift({
-    //     label: '开发者工具',
-    //     click: () => {
-    //       emit('openDevTool');
-    //     },
-    //   });
-    // }
+    // 检查是否是开发模式，如果是则添加开发者工具选项
+    if (isDev.value) {
+      otherMenu.unshift({
+        label: '开发者工具',
+        click: () => {
+          emit('openDevTool');
+        },
+      });
+    }
 
     pluginMenu = pluginMenu.concat(otherMenu);
   }

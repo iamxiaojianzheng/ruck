@@ -5,9 +5,7 @@
 import { dialog, BrowserWindow } from 'electron';
 import type { IPCHandler } from '@/types/ipc';
 import { getCurrentPlugin, setCurrentPlugin } from './plugin-handlers';
-import { runner } from '@/main/browsers';
-
-const runnerInstance = runner();
+import runnerInstance from '@/main/browsers/runner-instance';
 
 // ==================== 对话框 ====================
 

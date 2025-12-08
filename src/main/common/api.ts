@@ -10,10 +10,12 @@ import getCopyFiles from '@/common/utils/getCopyFiles';
 import { DECODE_KEY, PLUGIN_INSTALL_DIR as baseDir } from '@/common/constants/main';
 
 import mainInstance from '../index';
-import { runner, detach } from '../browsers';
+import runnerInstance from '../browsers/runner-instance';
+import { detach } from '../browsers';
 import DBInstance from './db';
 import getWinPosition from './getWinPosition';
 import { registerSeparateShortcut, unregisterSeparateShortcut } from './registerHotKey';
+import { setCurrentPlugin as setPluginHandlerCurrentPlugin } from '../ipc/handlers/plugin-handlers';
 // import { copyFilesToWindowsClipboard } from './windowsClipboard';
 
 /**
@@ -35,7 +37,6 @@ const sanitizeInputFiles = (input: unknown): string[] => {
     });
 };
 
-const runnerInstance = runner();
 const detachInstance = detach();
 
 class API extends DBInstance {
@@ -226,6 +227,7 @@ class API extends DBInstance {
 
     runnerInstance.init(plugin, window);
     this.currentPlugin = plugin;
+    setPluginHandlerCurrentPlugin(plugin); // 同步到 plugin-handlers
     window.webContents.executeJavaScript(
       `window.setCurrentPlugin(${JSON.stringify({ currentPlugin: this.currentPlugin })})`
     );
@@ -244,6 +246,7 @@ class API extends DBInstance {
   public removePlugin(e: any, window: BrowserWindow) {
     runnerInstance.removeView(window);
     this.currentPlugin = null;
+    setPluginHandlerCurrentPlugin(null); // 同步到 plugin-handlers
 
     // 插件关闭后，取消注册分离窗口快捷键
     unregisterSeparateShortcut();
@@ -450,15 +453,13 @@ class API extends DBInstance {
   public detachPlugin(e, window: BrowserWindow) {
     if (!this.currentPlugin) return;
     window.setBrowserView(null);
-    // console.log(window.contentView.children);
-    // const view = window.contentView.children[0];
-    // window.contentView.removeChildView(view);
     window.webContents.executeJavaScript(`window.getMainInputInfo()`).then((res) => {
       const pluginInfo = { ...this.currentPlugin, subInput: res };
       detachInstance.init(pluginInfo, window, runnerInstance);
       window.webContents.executeJavaScript(`window.initRubick()`);
       window.setSize(window.getSize()[0], 60);
       this.currentPlugin = null;
+      setPluginHandlerCurrentPlugin(null); // 同步到 plugin-handlers
 
       // 插件分离后，主窗口已无插件，取消注册分离窗口快捷键
       unregisterSeparateShortcut();

@@ -29,6 +29,28 @@ const getPreloadPath = (plugin, pluginIndexPath) => {
 };
 
 export default (): RunnerBrowser => {
+  let _view: any;
+
+  // 定义 getter/setter 来追踪 view 的所有修改
+  const viewHandler = {
+    get: () => {
+      return _view;
+    },
+    set: (newValue: any) => {
+      console.log('[runner] VIEW BEING SET! old:', _view, 'new:', newValue);
+      console.log('[runner] Stack trace:', new Error().stack);
+      _view = newValue;
+    }
+  };
+
+  // 使用 getter/setter 替代直接变量
+  Object.defineProperty(viewHandler, 'value', {
+    get: viewHandler.get,
+    set: viewHandler.set
+  });
+
+  // 注意：由于 JS 限制，我们需要在代码中使用 _view 而不是通过 proxy
+  // 让我们先添加日志，然后直接修改 view 赋值的地方
   let view: any;
 
   const viewReadyFn = async (window, { pluginSetting, ext }) => {
@@ -59,8 +81,7 @@ export default (): RunnerBrowser => {
   };
 
   const init = (plugin, window: BrowserWindow) => {
-    console.log('runner init', view, view?.webContents?.id);
-    if (view === null || view === undefined || view.inDetach) {
+    if (view === null || view === undefined || (view as any).inDetach) {
       createView(plugin, window);
       remote.enable(view.webContents);
     }

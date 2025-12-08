@@ -239,3 +239,124 @@ window.rubick = {
     return win;
   },
 };
+
+// ==================== 新的类型安全 IPC API ====================
+
+/**
+ * 类型安全的 IPC 调用封装（使用新的 IPC 通道）
+ */
+const ipcInvoke = async (channel, data) => {
+  try {
+    return await ipcRenderer.invoke(channel, data);
+  } catch (error) {
+    console.error(`IPC invoke error on channel "${channel}":`, error);
+    throw error;
+  }
+};
+
+/**
+ * 新的 IPC API - 使用 invoke 方式
+ * 逐步替换 window.rubick 中的 ipcSendSync 调用
+ */
+window.ruckAPI = {
+  // ==================== 窗口操作 ====================
+  async hideWindow() {
+    await ipcInvoke('window:hide');
+  },
+
+  async showWindow() {
+    await ipcInvoke('window:show');
+  },
+
+  async hideMainWindow() {
+    await ipcInvoke('window:hideMain');
+  },
+
+  async showMainWindow() {
+    await ipcInvoke('window:showMain');
+  },
+
+  async setExpendHeight(height) {
+    await ipcInvoke('window:setExpendHeight', { height });
+  },
+
+  async windowMoving(mouseX, mouseY, width, height) {
+    await ipcInvoke('window:moving', { mouseX, mouseY, width, height });
+  },
+
+  async getWindowPosition() {
+    return await ipcInvoke('window:getPosition');
+  },
+
+  // ==================== 插件操作 ====================
+  async loadPlugin(plugin) {
+    await ipcInvoke('plugin:load', { plugin });
+  },
+
+  async openPlugin(plugin) {
+    await ipcInvoke('plugin:open', { plugin });
+  },
+
+  async removePlugin() {
+    await ipcInvoke('plugin:remove');
+  },
+
+  async detachPlugin() {
+    await ipcInvoke('plugin:detach');
+  },
+
+  async openPluginDevTools() {
+    await ipcInvoke('plugin:openDevTools');
+  },
+
+  // ==================== 数据库操作 ====================
+  async dbGet(id) {
+    return await ipcInvoke('db:get', { id });
+  },
+
+  async dbPut(data) {
+    return await ipcInvoke('db:put', { data });
+  },
+
+  async dbRemove(doc) {
+    return await ipcInvoke('db:remove', { doc });
+  },
+
+  async dbBulkDocs(docs) {
+    return await ipcInvoke('db:bulkDocs', { docs });
+  },
+
+  async dbAllDocs(key) {
+    return await ipcInvoke('db:allDocs', { key });
+  },
+
+  // ==================== 系统操作 ====================
+  async getPath(name) {
+    return await ipcInvoke('system:getPath', { name });
+  },
+
+  async shellShowItemInFolder(path) {
+    return await ipcInvoke('system:shellShowItemInFolder', { path });
+  },
+
+  async isDev() {
+    return await ipcInvoke('system:isDev');
+  },
+
+  // ==================== 子输入框 ====================
+  async setSubInput(placeholder) {
+    await ipcInvoke('subInput:set', { placeholder });
+  },
+
+  async removeSubInput() {
+    await ipcInvoke('subInput:remove');
+  },
+
+  async setSubInputValue(text) {
+    await ipcInvoke('subInput:setValue', { text });
+  },
+
+  async getFileIcon(path) {
+    return await ipcInvoke('system:getFileIcon', { path });
+  },
+};

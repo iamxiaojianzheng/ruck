@@ -44,11 +44,6 @@ const emit = defineEmits(['updateConfig', 'detach', 'togglePin']);
 
 const { config, currentPlugin, showDetachOption, isDetach, pinStatus } = toRefs(props);
 
-const isAutoDetach = () => {
-  const pluginName = currentPlugin.value.name;
-  return config.value.pluginSettings?.[pluginName]?.autoDetach || false;
-};
-
 const changeAutoDetach = () => {
   const pluginName = currentPlugin.value.name;
   let cfg = JSON.parse(JSON.stringify(config.value));
@@ -74,7 +69,7 @@ const changeLang = (lang: string) => {
   emit('updateConfig', cfg);
 };
 
-const showMenu = () => {
+const showMenu = async () => {
   // 刷新配置，确保获取最新值（可能在 detach 窗口中被修改）
   const latestConfig = localConfig.getConfig();
   if (latestConfig) {
@@ -140,13 +135,19 @@ const showMenu = () => {
       });
     }
 
-    if (ipcRenderer.sendSync('msg-trigger', { type: 'isDev' })) {
-      otherMenu.unshift({
-        label: '开发者工具',
-        click: () => {
-          ipcRenderer.send('msg-trigger', { type: 'openPluginDevTools' });
-        },
-      });
+    // 检查是否是开发模式，如果是则添加开发者工具选项
+    try {
+      const isDev = await window.ruckAPI.isDev();
+      if (isDev) {
+        otherMenu.unshift({
+          label: '开发者工具',
+          click: () => {
+            window.ruckAPI.openPluginDevTools();
+          },
+        });
+      }
+    } catch (e) {
+      console.error('Failed to check dev mode:', e);
     }
 
     pluginMenu = pluginMenu.concat(otherMenu);

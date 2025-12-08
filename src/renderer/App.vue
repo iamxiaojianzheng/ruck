@@ -106,7 +106,7 @@ watch(
       options.value,
       pluginLoading.value || !config.value.perf.common.history ? [] : pluginHistory.value
     );
-    window.rubick.setExpendHeight(height);
+    window.ruckAPI.setExpendHeight(height);
   },
   {
     immediate: true,

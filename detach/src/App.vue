@@ -89,8 +89,10 @@ const pinWindow = () => {
   pluginInfo.value.pin = !pin;
 };
 
-const updateConfig = (updatedConfig) => {
+const updateConfig = async (updatedConfig) => {
   if (updatedConfig) {
+    // Detach 窗口只更新本地状态
+    // 配置的持久化由主窗口负责
     config.value = updatedConfig;
   }
 };

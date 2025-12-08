@@ -8,9 +8,7 @@ import type { IPCHandler } from '@/types/ipc';
 import commonConst from '@/common/utils/commonConst';
 import { screenCapture } from '@/core';
 import { getCurrentPlugin } from './plugin-handlers';
-import { runner } from '@/main/browsers';
-
-const runnerInstance = runner();
+import runnerInstance from '@/main/browsers/runner-instance';
 
 /**
  * 获取系统路径

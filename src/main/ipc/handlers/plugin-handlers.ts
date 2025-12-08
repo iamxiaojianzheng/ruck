@@ -4,12 +4,11 @@
 
 import { BrowserWindow, Notification } from 'electron';
 import type { IPCHandler } from '@/types/ipc';
-import { runner, detach } from '@/main/browsers';
-import commonConst from '@/common/utils/commonConst';
+import runnerInstance from '@/main/browsers/runner-instance';
+import { detach } from '@/main/browsers';
 import commonUtil from '@/common/utils/commonUtil';
 import { registerSeparateShortcut, unregisterSeparateShortcut } from '@/main/common/registerHotKey';
 
-const runnerInstance = runner();
 const detachInstance = detach();
 
 // 当前插件状态（从 API 类迁移）

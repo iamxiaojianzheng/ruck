@@ -148,15 +148,13 @@ const keydownEvent = (e: KeyboardEvent, key: string) => {
 };
 
 // 监听主进程发来的 ESC 键事件
-ipcRenderer.on('escape-key-pressed', () => {
+ipcRenderer.on('escape-key-pressed', async () => {
   // 如果输入框有内容，清空内容
   if (props.searchValue) {
     emit('clearSearchValue');
   } else {
     // 输入框没有内容，隐藏窗口
-    ipcRenderer.send('msg-trigger', {
-      type: 'hideWindow',
-    });
+    await window.ruckAPI.hideWindow();
   }
 });
 
@@ -196,12 +194,10 @@ const targetSearch = ({ value }: { value: string }) => {
   }
 };
 
-const closeTag = () => {
+const closeTag = async () => {
   emit('changeSelect', {});
   emit('clearClipbord');
-  ipcRenderer.send('msg-trigger', {
-    type: 'removePlugin',
-  });
+  await window.ruckAPI.removePlugin();
 };
 
 const updateConfig = (cfg: AppConfig) => {
@@ -209,20 +205,14 @@ const updateConfig = (cfg: AppConfig) => {
   config.value = cfg;
 };
 
-const handleDetach = () => {
-  ipcRenderer.send('msg-trigger', {
-    type: 'detachPlugin',
-  });
-  // todo
+const handleDetach = async () => {
+  await window.ruckAPI.detachPlugin();
 };
 
-const getIcon = () => {
+const getIcon = async () => {
   if (props.clipboardFile[0].dataUrl) return props.clipboardFile[0].dataUrl;
   try {
-    return ipcRenderer.sendSync('msg-trigger', {
-      type: 'getFileIcon',
-      data: { path: props.clipboardFile[0].path },
-    });
+    return await window.ruckAPI.getFileIcon(props.clipboardFile[0].path);
   } catch (e) {
     return require('../assets/file.png');
   }

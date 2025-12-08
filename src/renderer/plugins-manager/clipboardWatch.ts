@@ -30,7 +30,7 @@ export default ({ currentPlugin, optionsRef, openPlugin, setOptionsRef }) => {
       desc: '复制路径到剪切板',
       click: () => {
         clipboard.writeText(fileList.map((file) => file.path).join(','));
-        ipcRenderer.send('msg-trigger', { type: 'hideMainWindow' });
+        window.ruckAPI.hideMainWindow();
       },
     };
   };

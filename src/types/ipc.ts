@@ -81,6 +81,7 @@ export type IPCChannel =
     | 'detach:unpin'
     | 'detach:endFullScreen'
     | 'detach:inputChange'
+    | 'detach:openDevTools'
     // 渲染进程就绪通知
     | 'renderer:ready';
 
@@ -229,6 +230,7 @@ export interface IPCChannelMap {
     'detach:unpin': { request: void; response: void };
     'detach:endFullScreen': { request: void; response: void };
     'detach:inputChange': { request: { text: string }; response: void };
+    'detach:openDevTools': { request: void; response: void };
 
     // 渲染进程就绪
     'renderer:ready': { request: void; response: { success: boolean } };
