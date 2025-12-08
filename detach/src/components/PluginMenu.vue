@@ -32,10 +32,6 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
-  showDetachOption: {
-    type: Boolean,
-    default: true,
-  },
   isDetach: {
     type: Boolean,
     default: false,
@@ -50,17 +46,9 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits([
-  'updateConfig',
-  'detach',
-  'togglePin',
-  'openDevTool',
-  'minimize',
-  'maximize',
-  'close',
-]);
+const emit = defineEmits(['updateConfig', 'detach', 'togglePin', 'openDevTool', 'minimize', 'maximize', 'close']);
 
-const { config, currentPlugin, showDetachOption, isDetach, pinStatus, isDev } = toRefs(props);
+const { config, currentPlugin, isDetach, pinStatus, isDev } = toRefs(props);
 
 const isAutoDetach = () => {
   const pluginName = currentPlugin.value.name;
@@ -72,95 +60,29 @@ const changeAutoDetach = async () => {
   let cfg = JSON.parse(JSON.stringify(config.value));
   if (!cfg.pluginSettings) cfg.pluginSettings = {};
   if (!cfg.pluginSettings[pluginName]) cfg.pluginSettings[pluginName] = {};
-  
+
   const newValue = !cfg.pluginSettings[pluginName].autoDetach;
   cfg.pluginSettings[pluginName].autoDetach = newValue;
-  
+
   // 通过 IPC 保存插件设置
   await window.detachAPI.updatePluginSetting(pluginName, 'autoDetach', newValue);
-  
+
   // 更新本地状态
-  emit('updateConfig', cfg);
-};
-
-const changeHideOnBlur = () => {
-  let cfg = JSON.parse(JSON.stringify(config.value));
-  cfg.perf.common.hideOnBlur = !cfg.perf.common.hideOnBlur;
-  // 通用配置只更新本地状态，不持久化（由主窗口负责）
-  emit('updateConfig', cfg);
-};
-
-const changeLang = (lang: string) => {
-  let cfg = JSON.parse(JSON.stringify(config.value));
-  cfg.perf.common.lang = lang;
-  // 通用配置只更新本地状态，不持久化（由主窗口负责）
   emit('updateConfig', cfg);
 };
 
 const showMenu = () => {
   let pluginMenu: any = [];
 
-  if (!isDetach.value) {
+  if (currentPlugin.value && currentPlugin.value.logo) {
     pluginMenu.push({
-      label: config.value.perf.common.hideOnBlur ? '钉住' : '自动隐藏',
-      click: changeHideOnBlur,
+      label: '自动分离为独立窗口',
+      type: 'checkbox',
+      checked: isAutoDetach(),
+      click: changeAutoDetach,
     });
   }
 
-  pluginMenu.push({
-    label: config.value.perf.common.lang === 'zh-CN' ? '切换语言' : 'Change Language',
-    submenu: [
-      {
-        label: '简体中文',
-        click: () => {
-          changeLang('zh-CN');
-        },
-      },
-      {
-        label: 'English',
-        click: () => {
-          changeLang('en-US');
-        },
-      },
-    ],
-  });
-
-  if (currentPlugin.value && currentPlugin.value.logo) {
-    const otherMenu: any[] = [
-      {
-        label: '插件应用设置',
-        submenu: [
-          {
-            label: '自动分离为独立窗口',
-            type: 'checkbox',
-            checked: isAutoDetach(),
-            click: changeAutoDetach,
-          },
-        ],
-      },
-    ];
-
-    if (showDetachOption.value) {
-      otherMenu.push({
-        label: '分离窗口',
-        click: () => {
-          emit('detach');
-        },
-      });
-    }
-
-    // 检查是否是开发模式，如果是则添加开发者工具选项
-    if (isDev.value) {
-      otherMenu.unshift({
-        label: '开发者工具',
-        click: () => {
-          emit('openDevTool');
-        },
-      });
-    }
-
-    pluginMenu = pluginMenu.concat(otherMenu);
-  }
   const menu = Menu.buildFromTemplate(pluginMenu);
   menu.popup();
 };

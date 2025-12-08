@@ -14,7 +14,6 @@
     <PluginMenu
       :config="config"
       :currentPlugin="pluginInfo"
-      :showDetachOption="false"
       :isDetach="true"
       :pinStatus="pinStatus"
       :isDev="isDev"
@@ -32,8 +31,6 @@
 import { ref, computed } from 'vue';
 import throttle from 'lodash.throttle';
 import PluginMenu from './components/PluginMenu.vue';
-
-const { ipcRenderer } = window.require('electron');
 
 const process = window.require('process');
 const showInput = ref(false);
@@ -53,7 +50,7 @@ window.initDetach = async (info) => {
 
   // Fetch config from detach API
   try {
-    config.value = await window.detachAPI.getConfig() || {};
+    config.value = (await window.detachAPI.getConfig()) || {};
   } catch (e) {
     console.error(e);
   }
