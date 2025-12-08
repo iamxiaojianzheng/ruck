@@ -1,16 +1,43 @@
+/**
+ * 插件处理器模块
+ * 
+ * 本模块提供了 Ruck 插件系统的核心功能，负责插件的全生命周期管理：
+ * - 插件安装（本地开发模式和远程安装）
+ * - 插件卸载
+ * - 插件更新
+ * - 插件升级检查
+ * - 插件信息获取
+ * 
+ * **核心特性**：
+ * 1. **任务队列**：使用 TaskQueue 确保插件操作的串行执行，避免并发冲突
+ * 2. **版本缓存**：缓存插件的最新版本信息，减少网络请求
+ * 3. **重试机制**：npm 命令执行失败时自动重试（最多 3 次）
+ * 4. **Registry 支持**：支持自定义 npm registry，便于内网部署
+ * 
+ * **插件管理原理**：
+ * Ruck 的插件系统基于 npm 包模式，插件本质上就是 npm 包，带有特殊的 `plugin.json` 配置文件。
+ * 通过操作 npm 命令来管理插件的安装、卸载和更新，简单而强大。
+ * 
+ * @module PluginHandler
+ */
+
 import { AdapterHandlerOptions, AdapterInfo } from '@/core/plugin-handler/types';
 import fs from 'fs-extra';
 import path from 'path';
 import got from 'got';
 import fixPath from 'fix-path';
 import spawn from 'cross-spawn';
-import { ipcRenderer } from 'electron';
 import axios from 'axios';
 
 fixPath();
 
 /**
- * 任务队列，用于串行执行异步任务
+ * 任务队列类
+ * 
+ * 用于串行执行异步任务，确保插件操作不会发生并发冲突。
+ * 例如：防止同时安装多个插件导致 npm 锁文件冲突。
+ * 
+ * @class TaskQueue
  */
 class TaskQueue {
   private queue: Array<() => Promise<void>> = [];
@@ -27,6 +54,9 @@ class TaskQueue {
 
   /**
    * 执行队列中的任务
+   * 
+   * 如果队列正在运行，直接返回。
+   * 否则，依次执行队列中的所有任务。
    */
   private async run() {
     if (this.running) return;
@@ -46,7 +76,29 @@ class TaskQueue {
 }
 
 /**
- * 系统插件管理器
+ * 插件处理器类
+ * 
+ * 负责管理所有插件的安装、卸载、更新等操作。
+ * 
+ * **工作流程**：
+ * 1. 初始化时创建插件存放目录和 package.json
+ * 2. 使用 npm 命令进行插件操作
+ * 3. 通过任务队列确保操作的串行执行
+ * 4. 支持版本检查和自动升级
+ * 
+ * **插件存储结构**：
+ * ```
+ * baseDir/
+ * ├── package.json
+ * └── node_modules/
+ *     ├── plugin-name-1/
+ *     │   ├── plugin.json
+ *     │   └── index.js
+ *     └── plugin-name-2/
+ *         ├── plugin.json
+ *         └── index.js
+ * ```
+ * 
  * @class AdapterHandler
  */
 class AdapterHandler {

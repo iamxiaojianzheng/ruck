@@ -1,3 +1,39 @@
+/**
+ * 主进程 API 模块
+ * 
+ * 本模块提供了渲染进程与主进程通信的所有 API 接口，是 Ruck 应用的核心通信层。
+ * API 类继承自 DBInstance，提供以下功能：
+ * 
+ * **窗口管理**：
+ * - 主窗口的显示、隐藏、移动、大小调整
+ * - 分离窗口的创建和管理
+ * 
+ * **插件管理**：
+ * - 插件的加载、卸载、运行
+ * - 插件的分离和附加
+ * - 插件开发者工具
+ * 
+ * **数据管理**：
+ * - 本地数据库的 CRUD 操作
+ * - 数据导入导出
+ * - 附件管理
+ * 
+ * **系统集成**：
+ * - 剪贴板操作（文本、图片、文件）
+ * - 文件对话框
+ * - 系统通知
+ * - 屏幕截图
+ * - 文件图标获取
+ * - 键盘模拟
+ * 
+ * **UI 交互**：
+ * - 子输入框管理
+ * - 功能列表管理
+ * - 本地启动插件管理
+ * 
+ * @module API
+ */
+
 import { BrowserWindow, ipcMain, dialog, app, Notification, nativeImage, clipboard, screen, shell } from 'electron';
 import fs from 'fs';
 import ks from 'node-key-sender';
@@ -39,7 +75,23 @@ const sanitizeInputFiles = (input: unknown): string[] => {
 
 const detachInstance = detach();
 
+/**
+ * 主进程 API 类
+ * 
+ * 继承自 DBInstance，提供所有渲染进程需要调用的主进程方法。
+ * 通过 IPC 通信接收渲染进程的请求，并执行相应的操作。
+ */
 class API extends DBInstance {
+  /**
+   * 初始化 API，注册所有 IPC 监听器
+   * 
+   * 本方法在主窗口创建后立即调用，负责：
+   * 1. 注册 'msg-trigger' IPC 事件监听器（保持向后兼容）
+   * 2. 设置主窗口的 show/hide 事件监听
+   * 3. 注册 ESC 键监听器
+   * 
+   * @param mainWindow 主窗口实例
+   */
   init(mainWindow: BrowserWindow) {
     // 响应 preload.js 事件（保持向后兼容）
     ipcMain.on('msg-trigger', async (event, arg) => {
@@ -196,11 +248,32 @@ class API extends DBInstance {
     getWinPosition.setPosition(x - mouseX, y - mouseY);
   }
 
+  /**
+   * 加载并打开插件
+   * 
+   * 先通知渲染进程加载插件，然后调用 openPlugin 打开插件。
+   * 
+   * @param data 插件信息对象
+   * @param window 窗口实例
+   */
   public loadPlugin({ data: plugin }: { data: any }, window: BrowserWindow) {
     window.webContents.executeJavaScript(`window.loadPlugin(${JSON.stringify(plugin)})`);
     this.openPlugin({ data: plugin }, window);
   }
 
+  /**
+   * 打开插件
+   * 
+   * 本方法是插件系统的核心方法，负责：
+   * 1. 检查插件平台兼容性
+   * 2. 准备窗口大小和状态
+   * 3. 初始化插件运行器
+   * 4. 设置当前插件
+   * 5. 注册分离窗口快捷键
+   * 
+   * @param data 插件信息对象
+   * @param window 窗口实例
+   */
   public openPlugin({ data: plugin }: { data: any }, window: BrowserWindow) {
     if (plugin.platform && !plugin.platform.includes(process.platform)) {
       return new Notification({
@@ -243,6 +316,14 @@ class API extends DBInstance {
     registerSeparateShortcut();
   }
 
+  /**
+   * 移除插件
+   * 
+   * 关闭当前打开的插件，清理插件视图和状态，取消注册分离窗口快捷键。
+   * 
+   * @param e IPC 事件对象
+   * @param window 窗口实例
+   */
   public removePlugin(e: any, window: BrowserWindow) {
     runnerInstance.removeView(window);
     this.currentPlugin = null;
@@ -450,6 +531,17 @@ class API extends DBInstance {
     }
   }
 
+  /**
+   * 分离插件
+   * 
+   * 将当前插件从主窗口分离到独立窗口，允许用户：
+   * - 自由移动插件窗口
+   * - 调整插件窗口大小
+   * - 保持插件持续运行
+   * 
+   * @param e IPC 事件对象
+   * @param window 窗口实例
+   */
   public detachPlugin(e, window: BrowserWindow) {
     if (!this.currentPlugin) return;
     window.setBrowserView(null);

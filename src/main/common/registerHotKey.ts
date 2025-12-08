@@ -1,13 +1,49 @@
+/**
+ * 全局快捷键注册模块
+ * 
+ * 本模块负责管理 Ruck 应用的所有全局快捷键，包括：
+ * - 主窗口显示/隐藏快捷键（支持普通快捷键和双击修饰键）
+ * - 截图快捷键
+ * - 分离窗口快捷键（动态注册和取消注册）
+ * - 用户自定义全局快捷键
+ * 
+ * @module registerHotKey
+ */
+
 import { globalShortcut, nativeTheme, BrowserWindow, WebContentsView, ipcMain, app, Notification } from 'electron';
 import screenCapture from '@/core/screen-capture';
 import localConfig from '@/main/common/initLocalConfig';
 import { mainWindowShowAndHide } from './mainWindow';
 import { uIOhook, UiohookKey } from 'uiohook-napi';
 
-// 模块级变量用于保存引用，以便动态注册/取消注册分离窗口快捷键
+/**
+ * 模块级变量：缓存主窗口和 API 实例引用
+ * 用于在分离窗口快捷键的注册和取消注册中使用
+ */
 let cachedMainWindow: BrowserWindow | null = null;
 let cachedAPI: any = null;
 
+/**
+ * 注册所有全局快捷键
+ * 
+ * 本函数是快捷键注册的入口点，负责：
+ * 1. 设置开机启动
+ * 2. 设置暗黑模式和主题
+ * 3. 注册主窗口显示/隐藏快捷键（支持普通快捷键和双击修饰键）
+ * 4. 注册截图快捷键
+ * 5. 注册用户自定义全局快捷键
+ * 6. 监听配置变更并重新注册快捷键
+ * 
+ * @param mainWindow 主窗口实例
+ * @param API API 实例，包含所有窗口操作方法
+ * 
+ * @example
+ * ```typescript
+ * const mainWindow = createMainWindow();
+ * const api = new API();
+ * registerHotKey(mainWindow, api);
+ * ```
+ */
 const registerHotKey = (mainWindow: BrowserWindow, API: any): void => {
   // 保存引用供后续使用
   cachedMainWindow = mainWindow;
@@ -122,6 +158,27 @@ const registerHotKey = (mainWindow: BrowserWindow, API: any): void => {
 };
 export default registerHotKey;
 
+/**
+ * 使用 uIOhook 注册双击修饰键监听
+ * 
+ * 本函数专门用于处理双击修饰键（如 Ctrl+Ctrl、Option+Option）的快捷键注册。
+ * Electron 的 globalShortcut API 不支持双击修饰键，因此使用 uIOhook 库进行底层键盘监听。
+ * 
+ * 工作原理：
+ * 1. 监听所有键盘按下事件
+ * 2. 检测是否为配置的修饰键
+ * 3. 计算两次按键的时间间隔
+ * 4. 如果间隔小于 300ms，触发回调
+ * 
+ * @param callback 当检测到双击修饰键时的回调函数
+ * 
+ * @example
+ * ```typescript
+ * uIOhookRegister(() => {
+ *   mainWindow.show();
+ * });
+ * ```
+ */
 function uIOhookRegister(callback: () => void) {
   let lastModifierPress = Date.now();
   uIOhook.on('keydown', async (uio_event) => {
