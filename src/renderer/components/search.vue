@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onUnmounted } from 'vue';
 import { ipcRenderer } from 'electron';
 import type { Ref, PropType } from 'vue';
 import type { RuntimePlugin, FileInfo, AppConfig } from '@/types';
@@ -145,6 +145,7 @@ const keydownEvent = (e: KeyboardEvent, key: string) => {
 };
 
 // 监听主进程发来的 ESC 键事件
+ipcRenderer.removeAllListeners('escape-key-pressed');
 ipcRenderer.on('escape-key-pressed', async () => {
   // 如果输入框有内容，清空内容
   if (props.searchValue) {

@@ -49,7 +49,8 @@ if (enter) {
 }
 
 const currentSelect = ref(0);
-ipcRenderer.on(`changeCurrent`, (e, result) => {
+ipcRenderer.removeAllListeners('changeCurrent');
+ipcRenderer.on('changeCurrent', (e, result) => {
   const length = lists.value.length;
   const currentSelectValue = currentSelect.value;
   if (currentSelectValue + result > length - 1 || lists.value + result < 0) {
