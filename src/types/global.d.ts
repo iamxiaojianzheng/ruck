@@ -33,7 +33,7 @@ interface Option {
   icon: string;
   desc: string;
   type: string;
-  match: [number, number] | false;
+  match: number[][] | false;
   zIndex: number;
   click: () => void;
   keyWords?: string[];

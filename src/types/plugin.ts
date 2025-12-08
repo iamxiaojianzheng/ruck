@@ -16,6 +16,8 @@ export interface PluginInfo {
   author: string;
   /** 插件描述 */
   description: string;
+  /** 插件简短描述（用于标识） */
+  desc?: string;
   /** 插件版本 */
   version: string;
   /** 插件图标 */
@@ -86,10 +88,10 @@ export interface PluginContext {
   type: 'text' | 'img' | 'files' | 'regex' | 'over' | 'window';
   /** 载荷数据 */
   payload:
-    | string // text/regex/over
-    | string // img (Base64)
-    | FileInfo[] // files
-    | Record<string, any>; // window
+  | string // text/regex/over
+  | string // img (Base64)
+  | FileInfo[] // files
+  | Record<string, any>; // window
 }
 
 /** 插件运行状态 */
@@ -107,8 +109,8 @@ export interface PluginOption {
   desc: string;
   /** 选项类型 */
   type: string;
-  /** 匹配位置 */
-  match: [number, number] | false;
+  /** 匹配位置（支持多位置高亮）*/
+  match: number[][] | false;
   /** 显示优先级 */
   zIndex: number;
   /** 点击回调 */
@@ -120,7 +122,7 @@ export interface PluginOption {
 /** 运行时插件信息（包含运行上下文） */
 export interface RuntimePlugin extends PluginInfo {
   /** 当前触发的命令文本 */
-  cmd: string;
+  cmd: Cmd | string;
   /** 当前触发的功能 */
   feature: Feature;
   /** 插件页面路径 */
@@ -139,5 +141,6 @@ export interface RuntimePlugin extends PluginInfo {
 export interface LocalPlugin extends Partial<PluginInfo> {
   isDev?: boolean;
   logoPath?: string;
+  desc?: string;
   [key: string]: any;
 }

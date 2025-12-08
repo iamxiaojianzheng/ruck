@@ -2,14 +2,18 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { shell } from 'electron';
+import { generateAbbreviations } from '@/common/utils/abbreviation';
+import { pluginLogger as logger } from '@/common/logger';
 
-const filePath = path.resolve('C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs');
-
-const appData = path.join(os.homedir(), './AppData/Roaming');
-
-const startMenu = path.join(appData, 'Microsoft\\Windows\\Start Menu\\Programs');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const winVersionInfo = require('win-version-info');
 
 const splitNameRegex = /[ _-]/;
+const appData = path.join(os.homedir(), './AppData/Roaming');
+const searchPaths = [
+  path.resolve('C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs'),
+  path.join(appData, 'Microsoft\\Windows\\Start Menu\\Programs'),
+];
 
 const iconDir = path.join(os.tmpdir(), 'ProcessIcon');
 const exists = fs.existsSync(iconDir);
@@ -29,7 +33,7 @@ const getico = (iconPath: string, originFile: string, target: string) => {
       });
     }
   } catch (e) {
-    console.log(e, target);
+    logger.error('提取图标失败', { error: e, target });
   }
 };
 
@@ -46,29 +50,60 @@ async function fileDisplay(filePath: string, fileLists: any[]) {
           await fileDisplay(fullPath, fileLists); // 递归，如果是文件夹，就继续遍历该文件夹下面的文件
         }
 
-        const isFile = stats.isFile(); // 是文件
-        if (isFile) {
-          const appName = fileName.split('.')[0];
-          const keyWords = [appName];
+        if (stats.isFile()) {
+          const fileBaseName = fileName.split('.')[0];
           let appDetail: any = {};
           try {
             appDetail = shell.readShortcutLink(fullPath);
-            // console.log(appDetail);
           } catch (e) {
-            //
+            // 无法读取快捷方式
           }
 
           if (!appDetail.target) continue;
 
-          // C:/program/cmd.exe => cmd
-          keyWords.push(fileName);
-
-          if (splitNameRegex.test(appName)) {
-            keyWords.push(...appName.split(splitNameRegex));
+          // 尝试从目标可执行文件获取本地化显示名称
+          let displayName = fileBaseName;
+          if (appDetail.target && appDetail.target.toLowerCase().endsWith('.exe')) {
+            try {
+              const versionInfo = winVersionInfo(appDetail.target);
+              // 优先使用 FileDescription（通常包含本地化名称）
+              if (versionInfo?.FileDescription) {
+                displayName = versionInfo.FileDescription.trim();
+              } else if (versionInfo?.ProductName) {
+                displayName = versionInfo.ProductName.trim();
+              }
+            } catch (e) {
+              // 无法读取版本信息，使用默认文件名
+            }
           }
 
-          // const icon = path.join(iconDir, `${encodeURIComponent(appName)}.png`);
-          const icon = path.join(iconDir, `${appName}.png`);
+          // 构建搜索关键词列表
+          const keyWords = [displayName];
+
+          // 如果本地化名称与文件名不同，添加英文文件名作为关键词
+          if (fileBaseName !== displayName) {
+            keyWords.push(fileBaseName);
+          }
+
+          // 添加完整文件名
+          keyWords.push(fileName);
+
+          // 如果文件名包含分隔符，拆分后添加
+          if (splitNameRegex.test(fileBaseName)) {
+            keyWords.push(...fileBaseName.split(splitNameRegex));
+          }
+
+          // 添加应用名缩写（支持 vsc → Visual Studio Code 等）
+          const abbreviations = generateAbbreviations(displayName);
+          keyWords.push(...abbreviations);
+
+          // 如果本地化名称与文件名不同，也为文件名生成缩写
+          if (fileBaseName !== displayName) {
+            const fileAbbreviations = generateAbbreviations(fileBaseName);
+            keyWords.push(...fileAbbreviations);
+          }
+
+          const icon = path.join(iconDir, `${fileBaseName}.png`);
 
           const { target, args } = appDetail;
           const appInfo = {
@@ -79,23 +114,24 @@ async function fileDisplay(filePath: string, fileLists: any[]) {
             pluginType: 'app',
             action: `start "dummyclient" "${target}" ${args}`,
             keyWords: keyWords,
-            name: appName,
+            name: displayName,
             names: JSON.parse(JSON.stringify(keyWords)),
           };
           fileLists.push(appInfo);
           getico(icon, fullPath, appDetail.target);
         }
       } catch (eror) {
-        console.warn('获取文件stats失败', eror);
+        logger.warn('获取文件stats失败', { error: eror });
       }
     }
   } catch (err) {
-    console.warn(err);
+    logger.warn('读取目录失败', { error: err });
   }
 }
 
 export default async () => {
   const fileLists: any[] = [];
-  await Promise.all([fileDisplay(filePath, fileLists), fileDisplay(startMenu, fileLists)]);
+  const taskList = searchPaths.map((item) => fileDisplay(item, fileLists));
+  await Promise.all(taskList);
   return fileLists;
 };

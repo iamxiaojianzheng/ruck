@@ -81,19 +81,33 @@ const props = defineProps({
 
 const emit = defineEmits(['choosePlugin', 'setPluginHistory']);
 
-const renderTitle = (title: string, match: number[]) => {
+const renderTitle = (title: string, match: number[][]) => {
   if (typeof title !== 'string') return;
   if (!props.searchValue || !match) return title;
-  const result = title.substring(match[0], match[1] + 1);
-  return `<div>${title.substring(
-    0,
-    match[0]
-  )}<span style='color: var(--ant-error-color)'>${result}</span>${title.substring(match[1] + 1, title.length)}</div>`;
+
+  let result = '';
+  let lastEnd = 0;
+
+  // 按位置排序
+  const sortedPositions = [...match].sort((a, b) => a[0] - b[0]);
+
+  for (const [start, end] of sortedPositions) {
+    // 添加未高亮部分
+    result += title.substring(lastEnd, start);
+    // 添加高亮部分
+    result += `<span style='color: var(--ant-error-color)'>${title.substring(start, end + 1)}</span>`;
+    lastEnd = end + 1;
+  }
+
+  // 添加剩余部分
+  result += title.substring(lastEnd);
+
+  return `<div>${result}</div>`;
 };
 
 const renderDesc = (desc = '') => {
   if (desc.length > 80) {
-    return `${desc.substr(0, 63)}...${desc.substr(desc.length - 14, desc.length)}`;
+    return `${desc.substring(0, 63)}...${desc.substring(desc.length - 14, desc.length)}`;
   }
   return desc;
 };

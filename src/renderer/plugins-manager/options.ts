@@ -133,18 +133,18 @@ const optionsManager = ({ searchValue, appList, openPlugin, currentPlugin }) => 
         .filter((plugin) => {
           if (!descMap.get(plugin)) {
             descMap.set(plugin, true);
-            let has = false;
+            let hasMatch = false;
             plugin.keyWords.some((keyword) => {
               const match = cachedPinyinMatch(keyword, value);
               if (match) {
-                has = keyword;
-                plugin.name = keyword;
+                hasMatch = true;
+                // 不要覆盖 plugin.name，保持原始应用名称
                 plugin.match = match;
                 return true;
               }
               return false;
             });
-            return has;
+            return hasMatch;
           }
           return false;
         })

@@ -3,8 +3,8 @@
 import getMacApps from './get-mac-app';
 import fs from 'fs';
 import path from 'path';
-
 import os from 'os';
+import { generateAbbreviations } from '@/common/utils/abbreviation';
 
 const icondir = path.join(os.tmpdir(), 'ProcessIcon');
 
@@ -66,6 +66,10 @@ export default async (nativeImage: any) => {
       // 中文
       fileOptions.keyWords.push(app._name);
     }
+
+    // 添加应用名缩写（支持 vsc → Visual Studio Code 等）
+    const abbreviations = generateAbbreviations(appSubStr);
+    fileOptions.keyWords.push(...abbreviations);
 
     fileOptions = {
       ...fileOptions,

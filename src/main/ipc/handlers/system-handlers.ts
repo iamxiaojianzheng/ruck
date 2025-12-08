@@ -37,7 +37,7 @@ export const shellBeep: IPCHandler<'system:shellBeep'> = () => {
 
 /**
  * 获取文件图标（带缓存）
- * 
+ *
  * 使用 LRU 缓存策略，避免重复获取同一文件的图标，提升性能。
  */
 export const getFileIcon: IPCHandler<'system:getFileIcon'> = async (event, { path }) => {

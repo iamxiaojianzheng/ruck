@@ -55,7 +55,7 @@ import { rendererLogger as logger } from '@/common/logger';
  */
 interface PluginManagerState {
   /** 系统应用列表 */
-  appList: any[];
+  appList: RuntimePlugin[];
   /** 已安装的插件列表 */
   plugins: PluginInfo[];
   /** 本地插件列表 */
@@ -90,7 +90,7 @@ const createPluginManager = () => {
     pluginHistory: [],
   });
 
-  const appList: Ref<any[]> = ref([]);
+  const appList: Ref<RuntimePlugin[]> = ref([]);
 
   /**
    * 初始化插件系统
@@ -129,8 +129,8 @@ const createPluginManager = () => {
     const result = window.rubick.db.get(PLUGIN_HISTORY) || {};
 
     if (result && result.data) {
-      const validHistory = result.data.filter((item: any) =>
-        localPlugins.some((p: any) => p.name === item.name || p.name === item.originName)
+      const validHistory = result.data.filter((item: PluginInfo) =>
+        localPlugins.some((p: PluginInfo) => p.name === item.name || p.name === item.originName)
       );
 
       if (validHistory.length !== result.data.length) {
@@ -216,7 +216,7 @@ const createPluginManager = () => {
           ...plugin,
           ext: plugin.ext || {
             code: plugin.feature?.code,
-            type: (plugin.cmd as any)?.type || 'text',
+            type: (plugin.cmd as Cmd)?.type || 'text',
             payload: null,
           },
         })

@@ -1,14 +1,13 @@
 import { getLocalPlugins, clearPluginCache } from '../cache';
-import type { Feature, Cmd } from '@/types';
+import type { Feature, Cmd, LocalPlugin } from '@/types';
 import { rendererLogger as logger } from '@/common/logger';
 
 /**
  * 插件索引模块
  * 预构建插件索引，将 O(n³) 搜索复杂度降低到 O(n)
  */
-
 export interface PluginIndexItem {
-  plugin: any;
+  plugin: LocalPlugin;
   feature: Feature;
   cmd: Cmd | string;
   cmdLabel: string;

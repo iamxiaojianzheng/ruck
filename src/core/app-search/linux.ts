@@ -1,5 +1,6 @@
 import path from 'path';
 import originfs from 'original-fs';
+import { generateAbbreviations } from '@/common/utils/abbreviation';
 
 interface AppInfo {
   value: string;
@@ -138,6 +139,11 @@ function convertEntryFile2Feature(appPath: string): AppInfo | null {
     const cmd = targetAppInfo['X-Ubuntu-Gettext-Domain'];
     cmd && cmd !== targetAppInfo.Name && info.keyWords.push(cmd);
   }
+
+  // 添加应用名缩写（支持 vsc → Visual Studio Code 等）
+  const abbreviations = generateAbbreviations(targetAppInfo.Name);
+  info.keyWords.push(...abbreviations);
+
   return info;
 }
 
